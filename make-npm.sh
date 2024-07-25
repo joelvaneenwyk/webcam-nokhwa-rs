@@ -1,5 +1,4 @@
 #!/bin/sh
-
 #
 # Copyright 2022 l1npengtul <l1npengtul@protonmail.com> / The Nokhwa Contributors
 #
@@ -15,6 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+set -eax
 wasm-pack build --release --target web -- --features "input-jscam, output-wasm, small-wasm, test-fail-warning" --no-default-features
 mv pkg/nokhwa* nokhwajs/

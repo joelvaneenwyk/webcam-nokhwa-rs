@@ -1,0 +1,8 @@
+version: "0.2"
+ignorePaths: []
+dictionaryDefinitions:
+  - name: nokhwa
+    path: .github/config/webcam-nokhwa-rs.dict
+    addWords: true
+dictionaries:
+  - nokhwa

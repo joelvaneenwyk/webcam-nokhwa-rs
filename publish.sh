@@ -1,3 +1,5 @@
+#!/bin/sh
+set -eax
 cd nokhwa-core || exit
 cargo publish
 cd ../nokhwa-bindings-linux || exit

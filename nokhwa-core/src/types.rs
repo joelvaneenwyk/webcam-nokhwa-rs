@@ -1,4 +1,4 @@
-use crate::{
+pub use crate::{
     error::NokhwaError,
     frame_format::{FrameFormat},
 };

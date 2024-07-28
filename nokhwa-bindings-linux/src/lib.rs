@@ -180,7 +180,7 @@ mod internal {
 
                     self.camera_format = CameraFormat::new(
                         Resolution::new(format.width, format.height),
-                        frame_format: ,
+                        FrameFormat(),
                         fps,
                     );
                     Ok(())
@@ -626,12 +626,13 @@ mod internal {
 
 #[cfg(not(target_os = "linux"))]
 mod internal {
-    use nokhwa_core::buffer::Buffer;
+    use nokhwa_core::types::FrameRate;
+use nokhwa_core::buffer::Buffer;
     use nokhwa_core::error::NokhwaError;
     use nokhwa_core::traits::CaptureTrait;
-    use nokhwa_core::types::{
+    pub use nokhwa_core::types::{
         ApiBackend, CameraControl, CameraFormat, CameraIndex, CameraInfo, ControlValueSetter,
-        FrameFormat, KnownCameraControl, RequestedFormat, Resolution,
+        FrameFormat, KnownCameraControl, Resolution,
     };
     use std::borrow::Cow;
     use std::collections::HashMap;
@@ -665,7 +666,7 @@ mod internal {
         /// # Errors
         /// This function will error if the camera is currently busy or if `V4L2` can't read device information.
         #[allow(clippy::too_many_lines)]
-        pub fn new(index: &CameraIndex, cam_fmt: RequestedFormat) -> Result<Self, NokhwaError> {
+        pub fn new(index: &CameraIndex, cam_fmt: CameraFormat) -> Result<Self, NokhwaError> {
             Err(NokhwaError::NotImplementedError(
                 "V4L2 only on Linux".to_string(),
             ))
@@ -699,6 +700,10 @@ mod internal {
 
     #[allow(unused_variables)]
     impl<'a> CaptureTrait for V4LCaptureDevice<'a> {
+        fn init(&mut self) -> Result<(), NokhwaError> {
+            todo!()
+        }
+
         fn backend(&self) -> ApiBackend {
             ApiBackend::Video4Linux
         }
@@ -711,7 +716,7 @@ mod internal {
             todo!()
         }
 
-        fn camera_format(&self) -> CameraFormat {
+        fn camera_format(&self) -> Option<CameraFormat> {
             todo!()
         }
 
@@ -722,7 +727,7 @@ mod internal {
         fn compatible_list_by_resolution(
             &mut self,
             fourcc: FrameFormat,
-        ) -> Result<HashMap<Resolution, Vec<u32>>, NokhwaError> {
+        ) -> Result<HashMap<Resolution, Vec<FrameRate>>, NokhwaError> {
             todo!()
         }
 
@@ -730,7 +735,7 @@ mod internal {
             todo!()
         }
 
-        fn resolution(&self) -> Resolution {
+        fn resolution(&self) -> Option<Resolution> {
             todo!()
         }
 
@@ -738,7 +743,7 @@ mod internal {
             todo!()
         }
 
-        fn frame_rate(&self) -> u32 {
+        fn frame_rate(&self) -> Option<u32> {
             todo!()
         }
 

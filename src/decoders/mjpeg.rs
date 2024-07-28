@@ -8,7 +8,7 @@ use nokhwa_core::frame_format::{FrameFormat, SourceFrameFormat};
 fn decompress(
     data: &[u8],
     rgba: bool,
-) -> Result<, NokhwaError> {
+) -> Result<Buffer, NokhwaError> {
     use mozjpeg::Decompress;
 
     match Decompress::new_mem(data) {

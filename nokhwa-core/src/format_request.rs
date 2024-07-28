@@ -36,7 +36,7 @@ impl FormatRequest {
         Self::default()
     }
 
-    pub fn with_standard_frame_formats(mut self) -> Self {
+    pub fn with_standard_frame_formats(self) -> Self {
         self.append_frame_formats(&mut vec![
             FrameFormat::MJpeg,
             FrameFormat::Rgb8,
@@ -152,7 +152,7 @@ impl FormatRequest {
                     }
                     CustomFormatRequestType::Closest => {
                         
-                        let mut closest_type = match (&self.frame_rate, &self.resolution) {
+                        let closest_type = match (&self.frame_rate, &self.resolution) {
                             (Some(_), Some(_)) => ClosestType::Both,
                             (Some(_), None) => ClosestType::FrameRate,
                             (None, Some(_)) => ClosestType::Resolution,

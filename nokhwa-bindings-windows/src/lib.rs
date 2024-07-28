@@ -164,22 +164,23 @@ pub mod wmf {
 
     fn guid_to_frameformat(guid: GUID) -> Option<FrameFormat> {
         match guid {
-            MF_VIDEO_FORMAT_NV12 => Some(FrameFormat::NV12),
-            MF_VIDEO_FORMAT_RGB24 => Some(FrameFormat::RAWRGB),
-            MF_VIDEO_FORMAT_GRAY => Some(FrameFormat::GRAY),
-            MF_VIDEO_FORMAT_YUY2 => Some(FrameFormat::YUYV),
-            MF_VIDEO_FORMAT_MJPEG => Some(FrameFormat::MJPEG),
+            MF_VIDEO_FORMAT_NV12 => Some(FrameFormat::Nv12), // NV12
+            MF_VIDEO_FORMAT_RGB24 => Some(FrameFormat::Rgb8), // RAWRGB
+            MF_VIDEO_FORMAT_GRAY => Some(FrameFormat::Luma8), // GRAY
+            MF_VIDEO_FORMAT_YUY2 => Some(FrameFormat::Yuv422), // YUYV
+            MF_VIDEO_FORMAT_MJPEG => Some(FrameFormat::MJpeg), // MJPEG
             _ => None,
         }
     }
 
     fn frameformat_to_guid(frameformat: FrameFormat) -> GUID {
         match frameformat {
-            FrameFormat::MJPEG => MF_VIDEO_FORMAT_MJPEG,
-            FrameFormat::YUYV => MF_VIDEO_FORMAT_YUY2,
-            FrameFormat::NV12 => MF_VIDEO_FORMAT_NV12,
-            FrameFormat::GRAY => MF_VIDEO_FORMAT_GRAY,
-            FrameFormat::RAWRGB => MF_VIDEO_FORMAT_RGB24,
+            FrameFormat::MJpeg => MF_VIDEO_FORMAT_MJPEG,
+            FrameFormat::Yuv422 => MF_VIDEO_FORMAT_YUY2,
+            FrameFormat::Nv12 => MF_VIDEO_FORMAT_NV12,
+            FrameFormat::Luma8 => MF_VIDEO_FORMAT_GRAY,
+            FrameFormat::Rgb8 => MF_VIDEO_FORMAT_RGB24,
+            _ => {MF_VIDEO_FORMAT_RGB24}
         }
     }
 
@@ -360,7 +361,7 @@ pub mod wmf {
             &name,
             "MediaFoundation Camera",
             &symlink,
-            index,
+            &index,
         ))
     }
 
@@ -655,7 +656,7 @@ pub mod wmf {
                         camera_format_list.push(CameraFormat::new(
                             Resolution::new(width, height),
                             frame_fmt,
-                            frame_rate,
+                            nokhwa_core::types::FrameRate::Integer(frame_rate),
                         ));
                     }
                 }
@@ -998,7 +999,7 @@ pub mod wmf {
                         }
                     };
 
-                    let cfmt = CameraFormat::new(resolution, format, frame_rate);
+                    let cfmt = CameraFormat::new(resolution, format, nokhwa_core::types::FrameRate::Integer(frame_rate));
                     self.device_format = cfmt;
 
                     Ok(cfmt)
@@ -1032,7 +1033,7 @@ pub mod wmf {
             let fps = {
                 let frame_rate_u64 = 0_u64;
                 let mut bytes: [u8; 8] = frame_rate_u64.to_le_bytes();
-                bytes[7] = format.frame_rate() as u8;
+                bytes[7] = format.frame_rate().as_u32() as u8;
                 bytes[3] = 0x01;
                 u64::from_le_bytes(bytes)
             };

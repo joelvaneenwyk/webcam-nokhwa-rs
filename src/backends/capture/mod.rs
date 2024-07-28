@@ -82,7 +82,7 @@ resolver_platform!(
         msf,
         "input-msmf",
         "windows",
-        msmf_backend::MediaFoundationCaptureDevice
+        MediaFoundationCaptureDevice
     )
 );
 
@@ -95,7 +95,7 @@ resolver_platform_2!((
 ));
 
 resolver_cross_platform!(
-    (opencv, "input-opencv", opencv_backend::OpenCvCaptureDevice) // TODO: wasm
+    (opencv, "input-opencv", OpenCvCaptureDevice) // TODO: wasm
 );
 
 #[cfg(all(feature = "input-v4l", target_os = "linux"))]

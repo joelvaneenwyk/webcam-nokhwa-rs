@@ -135,7 +135,11 @@ mod internal {
         /// # Errors
         /// This function will error if the camera is currently busy or if `V4L2` can't read device information.
         #[allow(clippy::too_many_lines)]
-        pub fn new(index: &CameraIndex) -> Result<Self, NokhwaError> {}
+        pub fn new(index: &CameraIndex) -> Result<Self, NokhwaError> {
+            Err(NokhwaError::NotImplementedError(
+                "V4L2 only on Linux".to_string(),
+            ))
+        }
 
         /// Force refreshes the inner [`CameraFormat`] state.
         /// # Errors
@@ -178,11 +182,11 @@ mod internal {
                         }
                     };
 
-                    self.camera_format = CameraFormat::new(
+                    self.camera_format = Some(CameraFormat::new(
                         Resolution::new(format.width, format.height),
-                        frame_format: ,
-                        fps,
-                    );
+                        frame_format,
+                        nokhwa_core::format_request::FrameRate::Integer(fps),
+                    ));
                     Ok(())
                 }
                 Err(why) => Err(NokhwaError::GetPropertyError {
@@ -367,11 +371,11 @@ mod internal {
         }
 
         fn resolution(&self) -> Resolution {
-            self.camera_format.resolution()
+            self.camera_format.expect("").resolution()
         }
 
         fn set_resolution(&mut self, new_res: Resolution) -> Result<(), NokhwaError> {
-            let mut new_fmt = self.camera_format;
+            let mut new_fmt = self.camera_format.expect("");
             new_fmt.set_resolution(new_res);
             self.set_camera_format(new_fmt)
         }
@@ -381,17 +385,17 @@ mod internal {
         }
 
         fn set_frame_rate(&mut self, new_fps: u32) -> Result<(), NokhwaError> {
-            let mut new_fmt = self.camera_format;
-            new_fmt.set_frame_rate(new_fps);
+            let mut new_fmt = self.camera_format.expect("");
+            new_fmt.set_frame_rate(nokhwa_core::types::FrameRate::new_integer(new_fps)?);
             self.set_camera_format(new_fmt)
         }
 
         fn frame_format(&self) -> FrameFormat {
-            self.camera_format.format()
+            self.camera_format.expect("").format()
         }
 
         fn set_frame_format(&mut self, fourcc: FrameFormat) -> Result<(), NokhwaError> {
-            let mut new_fmt = self.camera_format;
+            let mut new_fmt = self.camera_format.expect("");
             new_fmt.set_format(fourcc);
             self.set_camera_format(new_fmt)
         }
@@ -568,9 +572,9 @@ mod internal {
             let cam_fmt = self.camera_format;
             let raw_frame = self.frame_raw()?;
             Ok(Buffer::new(
-                cam_fmt.resolution(),
+                cam_fmt.expect("").resolution(),
                 &raw_frame,
-                cam_fmt.format(),
+                cam_fmt.expect("").format(),
             ))
         }
 
@@ -615,11 +619,31 @@ mod internal {
             _ => None,
         }
     }
-    
 
     fn frameformat_to_fourcc(fourcc: FrameFormat) -> FourCC {
         match fourcc {
-            
+            FrameFormat::H265 => todo!(),
+            FrameFormat::H264 => todo!(),
+            FrameFormat::H263 => todo!(),
+            FrameFormat::Avc1 => todo!(),
+            FrameFormat::Mpeg1 => todo!(),
+            FrameFormat::Mpeg2 => todo!(),
+            FrameFormat::Mpeg4 => todo!(),
+            FrameFormat::MJpeg => todo!(),
+            FrameFormat::XVid => todo!(),
+            FrameFormat::VP8 => todo!(),
+            FrameFormat::VP9 => todo!(),
+            FrameFormat::Yuv422 => todo!(),
+            FrameFormat::Uyv422 => todo!(),
+            FrameFormat::Nv12 => todo!(),
+            FrameFormat::Nv21 => todo!(),
+            FrameFormat::Yv12 => todo!(),
+            FrameFormat::Luma8 => todo!(),
+            FrameFormat::Luma16 => todo!(),
+            FrameFormat::Rgb8 => todo!(),
+            FrameFormat::RgbA8 => todo!(),
+            FrameFormat::Custom(_) => todo!(),
+            FrameFormat::PlatformSpecificCustomFormat(_) => todo!(),
         }
     }
 }

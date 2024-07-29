@@ -148,6 +148,19 @@ impl CaptureTrait for Camera {
     fn stop_stream(&mut self) -> Result<(), NokhwaError> {
         todo!()
     }
+
+    fn compatible_camera_formats(&mut self) -> Result<Vec<CameraFormat>, NokhwaError> {
+        let mut compatible_formats = std::vec![];
+        for fourcc in self.compatible_fourcc()? {
+            for (resolution, fps_list) in self.compatible_list_by_resolution(fourcc)? {
+                for fps in fps_list {
+                    compatible_formats.push(CameraFormat::new(resolution, fourcc, fps));
+                }
+            }
+        }
+
+        Ok(compatible_formats)
+    }
 }
 
 impl Drop for Camera {

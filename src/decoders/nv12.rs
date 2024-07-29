@@ -11,7 +11,10 @@ impl Decoder for NV12Decoder {
     type Container = Vec<u8>;
     type Error = ();
 
-    fn decode(&mut self, buffer: Buffer) -> Result<ImageBuffer<Self::Pixel, Self::Container>, Self::Error> {
+    fn decode(
+        &mut self,
+        buffer: Buffer,
+    ) -> Result<ImageBuffer<Self::Pixel, Self::Container>, Self::Error> {
         todo!()
     }
 
@@ -25,7 +28,9 @@ impl Decoder for NV12Decoder {
 }
 
 impl StaticDecoder for NV12Decoder {
-    fn decode_static(buffer: Buffer) -> Result<ImageBuffer<Self::Pixel, Self::Container>, Self::Error> {
+    fn decode_static(
+        buffer: Buffer,
+    ) -> Result<ImageBuffer<Self::Pixel, Self::Container>, Self::Error> {
         todo!()
     }
 

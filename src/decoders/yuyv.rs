@@ -20,7 +20,10 @@ impl Decoder for YUYVDecoder {
     type Container = ();
     type Error = ();
 
-    fn decode(&mut self, buffer: Buffer) -> Result<ImageBuffer<Self::Pixel, Self::Container>, Self::Error> {
+    fn decode(
+        &mut self,
+        buffer: Buffer,
+    ) -> Result<ImageBuffer<Self::Pixel, Self::Container>, Self::Error> {
         todo!()
     }
 
@@ -34,7 +37,9 @@ impl Decoder for YUYVDecoder {
 }
 
 impl StaticDecoder for YUYVDecoder {
-    fn decode_static(buffer: Buffer) -> Result<ImageBuffer<Self::Pixel, Self::Container>, Self::Error> {
+    fn decode_static(
+        buffer: Buffer,
+    ) -> Result<ImageBuffer<Self::Pixel, Self::Container>, Self::Error> {
         todo!()
     }
 
@@ -44,7 +49,10 @@ impl StaticDecoder for YUYVDecoder {
 }
 
 impl IdemptDecoder for YUYVDecoder {
-    fn decode_nm(&self, buffer: Buffer) -> Result<ImageBuffer<Self::Pixel, Self::Container>, Self::Error> {
+    fn decode_nm(
+        &self,
+        buffer: Buffer,
+    ) -> Result<ImageBuffer<Self::Pixel, Self::Container>, Self::Error> {
         todo!()
     }
 

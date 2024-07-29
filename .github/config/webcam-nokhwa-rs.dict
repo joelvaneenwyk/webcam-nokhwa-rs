@@ -2,6 +2,7 @@ avfoundation
 bindgen
 cdylib
 clippy
+fourcc
 gennyble
 jscam
 markdownlint

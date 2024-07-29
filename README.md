@@ -47,15 +47,15 @@ The table below lists current Nokhwa API support.
 - The `Input` column signifies reading frames from the camera
 - The `Query` column signifies system device list support
 - The `Query-Device` column signifies reading device capabilities
-- The `Platform` column signifies what Platform this is availible on.
+- The `Platform` column signifies what Platform this is available on.
 
- | Backend                              | Input              | Query             | Query-Device       | Platform            |
- |-----------------------------------------|-------------------|--------------------|-------------------|--------------------|
- | Video4Linux(`input-native`)          | ✅                 | ✅                 | ✅                | Linux               |
- | MSMF(`input-native`)                 | ✅                 | ✅                 | ✅                | Windows             |
- | AVFoundation(`input-native`)   | ✅                 | ✅                 | ✅                | Mac                 |
- | OpenCV(`input-opencv`)^              | ✅                 | ❌                 | ❌                | Linux, Windows, Mac |
- | WASM(`input-wasm`)                | ✅                 | ✅                 | ✅                | Browser(Web)        |
+ | Backend                      | Input | Query | Query-Device | Platform            |
+ |------------------------------|-------|-------|--------------|---------------------|
+ | Video4Linux(`input-native`)  | ✅     | ✅     | ✅            | Linux               |
+ | MSMF(`input-native`)         | ✅     | ✅     | ✅            | Windows             |
+ | AVFoundation(`input-native`) | ✅     | ✅     | ✅            | Mac                 |
+ | OpenCV(`input-opencv`)^      | ✅     | ❌     | ❌            | Linux, Windows, Mac |
+ | WASM(`input-wasm`)           | ✅     | ✅     | ✅            | Browser(Web)        |
 
  ✅: Working, 🔮 : Experimental, ❌ : Not Supported, 🚧: Planned/WIP
 

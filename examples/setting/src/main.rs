@@ -1,9 +1,15 @@
-use nokhwa::{Camera, CameraFormat, KnownCameraControl};
+use nokhwa::{
+    pixel_format::RgbFormat,
+    utils::{CameraIndex, KnownCameraControl, RequestedFormat, RequestedFormatType},
+    Camera,
+};
 
 fn main() {
-    let mut camera = Camera::new(0, None).unwrap();
+    let requested = RequestedFormat::new::<RgbFormat>(
+        RequestedFormatType::None);
+    let mut camera = Camera::new(CameraIndex::Index(0), requested).unwrap();
     let known = camera.camera_controls_known_camera_controls().unwrap();
-    let mut control = *known.get(&KnownCameraControl::Gamma).unwrap();
-    control.set_value(101).unwrap();
-    camera.set_camera_control(control).unwrap();
+    let control = known.get(&KnownCameraControl::Gamma).unwrap();
+    //control.set_value(101).unwrap();
+    camera.set_camera_control(KnownCameraControl::Gamma, control.value()).unwrap();
 }

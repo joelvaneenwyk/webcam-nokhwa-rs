@@ -3,6 +3,7 @@ bindgen
 cdylib
 clippy
 gennyble
+gstreamer
 jscam
 mozjpeg
 msmf
@@ -12,6 +13,7 @@ nolink
 npengtul
 opencv
 println
+RAWRGB
 remifluff
 rlib
 rustc

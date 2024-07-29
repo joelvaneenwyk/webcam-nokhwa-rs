@@ -15,5 +15,8 @@
 # limitations under the License.
 #
 set -eax
-wasm-pack build --release --target web -- --features "input-jscam, output-wasm, small-wasm, test-fail-warning" --no-default-features
+wasm-pack build --release \
+    --target web -- \
+    --features "input-jscam, output-wasm, small-wasm, test-fail-warning" \
+    --no-default-features
 mv pkg/nokhwa* nokhwajs/

@@ -1,13 +1,16 @@
-/target
+/target/
 
-.idea
+.idea/
 nokhwa.iml
-.vs
+.vs/
 
-.vscode
+.vscode/
+/pkg/
 
-/pkg
-
-target
+target/
 
 .DS_STORE
+
+.pnp.cjs
+
+.yarn/

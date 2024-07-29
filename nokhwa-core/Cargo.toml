@@ -15,6 +15,7 @@ serialize = ["serde"]
 wgpu-types = ["wgpu"]
 mjpeg = ["mozjpeg"]
 opencv-mat = ["opencv"]
+output-wasm = []
 docs-features = ["serialize", "wgpu-types", "mjpeg"]
 test-fail-warnings = []
 

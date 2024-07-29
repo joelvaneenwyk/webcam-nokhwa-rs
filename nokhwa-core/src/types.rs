@@ -1468,7 +1468,11 @@ impl Display for ApiBackend {
 /// # Safety
 /// This function uses `unsafe`. The caller must ensure that:
 /// - The input data is of the right size, does not exceed bounds, and/or the final size matches with the initial size.
-#[cfg(all(feature = "mjpeg", not(target_arch = "wasm32"), not(target_arch = "wasm64")))]
+#[cfg(all(
+    feature = "mjpeg",
+    not(target_arch = "wasm32"),
+    not(target_arch = "wasm64")
+))]
 #[cfg_attr(feature = "docs-features", doc(cfg(feature = "mjpeg")))]
 #[inline]
 pub fn mjpeg_to_rgb(data: &[u8], rgba: bool) -> Result<Vec<u8>, NokhwaError> {
@@ -1521,7 +1525,11 @@ pub fn mjpeg_to_rgb(data: &[u8], rgba: bool) -> Result<Vec<u8>, NokhwaError> {
     }
 }
 
-#[cfg(not(all(feature = "mjpeg", not(target_arch = "wasm32"), not(target_arch = "wasm64"))))]
+#[cfg(not(all(
+    feature = "mjpeg",
+    not(target_arch = "wasm32"),
+    not(target_arch = "wasm64")
+)))]
 pub fn mjpeg_to_rgb(_data: &[u8], _rgba: bool) -> Result<Vec<u8>, NokhwaError> {
     Err(NokhwaError::NotImplementedError(
         "Not available on WASM".to_string(),
@@ -1531,7 +1539,11 @@ pub fn mjpeg_to_rgb(_data: &[u8], _rgba: bool) -> Result<Vec<u8>, NokhwaError> {
 /// Equivalent to [`mjpeg_to_rgb`] except with a destination buffer.
 /// # Errors
 /// If the decoding fails (e.g. invalid MJPEG stream), the buffer is not large enough, or you are doing this on `WebAssembly`, this will error.
-#[cfg(all(feature = "mjpeg", not(target_arch = "wasm32"), not(target_arch = "wasm64")))]
+#[cfg(all(
+    feature = "mjpeg",
+    not(target_arch = "wasm32"),
+    not(target_arch = "wasm64")
+))]
 #[cfg_attr(feature = "docs-features", doc(cfg(feature = "mjpeg")))]
 #[inline]
 pub fn buf_mjpeg_to_rgb(data: &[u8], dest: &mut [u8], rgba: bool) -> Result<(), NokhwaError> {
@@ -1592,7 +1604,11 @@ pub fn buf_mjpeg_to_rgb(data: &[u8], dest: &mut [u8], rgba: bool) -> Result<(), 
     Ok(())
 }
 
-#[cfg(not(all(feature = "mjpeg", not(target_arch = "wasm32"), not(target_arch = "wasm64"))))]
+#[cfg(not(all(
+    feature = "mjpeg",
+    not(target_arch = "wasm32"),
+    not(target_arch = "wasm64")
+)))]
 pub fn buf_mjpeg_to_rgb(_data: &[u8], _dest: &mut [u8], _rgba: bool) -> Result<(), NokhwaError> {
     Err(NokhwaError::NotImplementedError(
         "Not available on WASM".to_string(),

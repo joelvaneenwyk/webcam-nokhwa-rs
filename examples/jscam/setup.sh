@@ -22,11 +22,11 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #
 
-mkdir public
-mkdir dist
+mkdir -p ./public
+mkdir -p ./dist
 cd ../../
 sh make-npm.sh
-cd examples/jscam || return
+cd examples/jscam || exit 55
 npm install --save-dev webpack webpack-cli webpack-dev-server
 npm install --save ../../nokhwajs
 npm run build

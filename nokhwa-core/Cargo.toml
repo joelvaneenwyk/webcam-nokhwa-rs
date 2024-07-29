@@ -12,6 +12,7 @@ repository = "https://github.com/l1npengtul/nokhwa"
 
 [features]
 default = []
+mjpeg = []
 serialize = ["serde"]
 wgpu-types = ["wgpu"]
 opencv-mat = ["opencv"]

@@ -332,7 +332,7 @@ impl Distance<u32> for Resolution {
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-/// The frame rate of a camera. DO NOT CONSTRUCT THIS ENUM DIRECTLY. YOU WILL VIOLATE INVARIANTS. Use [`FrameRate::new_integer`], [`FrameRate::new_fraction`], or [`FrameRate::new_float`] instead. 
+/// The frame rate of a camera. DO NOT CONSTRUCT THIS ENUM DIRECTLY. YOU WILL VIOLATE INVARIANTS. Use [`FrameRate::new_integer`], [`FrameRate::new_fraction`], or [`FrameRate::new_float`] instead.
 pub enum FrameRate {
     /// The driver reports the frame rate as a clean integer (e.g. 30 FPS).
     Integer(u32),
@@ -350,7 +350,7 @@ impl FrameRate {
         if fps == 0 {
             return Err(NokhwaError::StructureError { structure: "FrameRate".to_string(), error: "Framerate cannot be 0".to_string() })
         }
-        
+
         Ok(FrameRate::Integer(fps))
     }
 
@@ -358,7 +358,7 @@ impl FrameRate {
         if fps.is_nan() || fps.is_infinite() || fps.is_sign_negative() || (fps > f32::EPSILON) {
             return Err(NokhwaError::StructureError { structure: "FrameRate".to_string(), error: "Invalid F32 FrameRate".to_string() })
         }
-        
+
         Ok(FrameRate::Float(fps))
     }
 
@@ -366,7 +366,7 @@ impl FrameRate {
         if numerator == 0 || denominator == 0 {
             return Err(NokhwaError::StructureError { structure: "FrameRate".to_string(), error: "Invalid Fraction (denominator or numerator is 0)".to_string() })
         }
-        
+
         Ok(
             FrameRate::Fraction {
                 numerator,
@@ -1539,15 +1539,14 @@ fn decompress<'a>(
 /// This function uses `unsafe`. The caller must ensure that:
 /// - The input data is of the right size, does not exceed bounds, and/or the final size matches with the initial size.
 #[cfg_attr(feature = "docs-features", doc(cfg(feature = "mjpeg")))]
-#[inline]
-pub fn mjpeg_to_rgb(data: &[u8], rgba: bool) -> Result<Vec<u8>, NokhwaError> {
-    let mut jpeg_decompress = decompress(data, rgba)?;
 #[cfg(all(
     feature = "mjpeg",
     not(target_arch = "wasm32"),
     not(target_arch = "wasm64")
 ))]
-
+#[inline]
+pub fn mjpeg_to_rgb(data: &[u8], rgba: bool) -> Result<Vec<u8>, NokhwaError> {
+    let mut jpeg_decompress = decompress(data, rgba)?;
     let scanlines_res = jpeg_decompress.read_scanlines();
     // assert!(jpeg_decompress.finish_decompress());
     if jpeg_decompress.finish().is_err() {
@@ -1561,7 +1560,7 @@ pub fn mjpeg_to_rgb(data: &[u8], rgba: bool) -> Result<Vec<u8>, NokhwaError> {
     match scanlines_res {
         Ok(pixels) => Ok(pixels),
         Err(_) => Err(NokhwaError::ProcessFrameError {
-            src: FrameFormat::MJPEG,
+            src: FrameFormat::MJpeg,
             destination: "RGB888".to_string(),
             error: "Failed to get read readlines into RGB888 pixels!".to_string(),
         }),

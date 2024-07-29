@@ -40,7 +40,7 @@ pub trait Backend {
 pub trait CaptureTrait {
     /// Initialize the camera, preparing it for use, with a random format (usually the first one).
     fn init(&mut self) -> Result<(), NokhwaError>;
-    
+
     /// Returns the current backend used.
     fn backend(&self) -> ApiBackend;
 
@@ -173,11 +173,27 @@ pub trait CaptureTrait {
     /// This assumes that you are decoding to RGB/RGBA for [`FrameFormat::MJPEG`] or [`FrameFormat::YUYV`] and Luma8/LumaA8 for [`FrameFormat::GRAY`]
     #[must_use]
     fn decoded_buffer_size(&self, alpha: bool) -> usize {
-        let cfmt = self.camera_format();
+        let cfmt = self.camera_format().unwrap();
         let resolution = cfmt.resolution();
         let pxwidth = match cfmt.format() {
-            FrameFormat::MJPEG | FrameFormat::YUYV | FrameFormat::RAWRGB | FrameFormat::NV12 => 3,
-            FrameFormat::GRAY => 1,
+            FrameFormat::MJpeg | FrameFormat::Yv12 | FrameFormat::Rgb8 | FrameFormat::Nv12 => 3,
+            FrameFormat::Luma8 | FrameFormat::Luma16 => 1,
+            FrameFormat::H265 => todo!(),
+            FrameFormat::H264 => todo!(),
+            FrameFormat::H263 => todo!(),
+            FrameFormat::Avc1 => todo!(),
+            FrameFormat::Mpeg1 => todo!(),
+            FrameFormat::Mpeg2 => todo!(),
+            FrameFormat::Mpeg4 => todo!(),
+            FrameFormat::XVid => todo!(),
+            FrameFormat::VP8 => todo!(),
+            FrameFormat::VP9 => todo!(),
+            FrameFormat::Yuv422 => todo!(),
+            FrameFormat::Uyv422 => todo!(),
+            FrameFormat::Nv21 => todo!(),
+            FrameFormat::RgbA8 => todo!(),
+            FrameFormat::Custom(_) => todo!(),
+            FrameFormat::PlatformSpecificCustomFormat(_) => todo!(),
         };
         if alpha {
             return (resolution.width() * resolution.height() * (pxwidth + 1)) as usize;

@@ -24,5 +24,5 @@ path = "../.."
 features = ["input-native", "output-threaded"]
 
 [dependencies.image]
-version = "0.24.5"
+version = "0.25.2"
 features = ["png"]

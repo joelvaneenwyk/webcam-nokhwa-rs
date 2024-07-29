@@ -185,15 +185,15 @@ pub mod wmf {
 
     pub fn initialize_mf() -> Result<(), NokhwaError> {
         if !(INITIALIZED.load(Ordering::SeqCst)) {
-            if let Err(why) = unsafe {
-                CoInitializeEx(None, CO_INIT_APARTMENT_THREADED | CO_INIT_DISABLE_OLE1DDE)
-            } {
-                return Err(NokhwaError::InitializeError {
-                    backend: ApiBackend::MediaFoundation,
-                    error: why.to_string(),
-                });
+            unsafe {
+                let result = CoInitializeEx(None, CO_INIT_APARTMENT_THREADED | CO_INIT_DISABLE_OLE1DDE);
+                if result.is_err() {
+                    return Err(NokhwaError::InitializeError {
+                        backend: ApiBackend::MediaFoundation,
+                        error: format!("CoInitializeEx failed with error code {}", result.0),
+                    });
+                }
             }
-
             if let Err(why) = unsafe { MFStartup(MF_API_VERSION, MFSTARTUP_NOSOCKET) } {
                 unsafe {
                     CoUninitialize();

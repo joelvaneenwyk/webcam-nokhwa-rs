@@ -21,7 +21,7 @@
 //! # nokhwa
 //! A Simple-to-use, cross-platform Rust Webcam Capture Library
 //!
-//! The raw backends can be found in [`backends`](crate::backends)
+//! The raw backends can be found in [`backends`](backends)
 //!
 //! The [`Camera`] struct is what you will likely use.
 //!
@@ -38,13 +38,18 @@ mod init;
 #[cfg(feature = "input-jscam")]
 #[cfg_attr(feature = "docs-features", doc(cfg(feature = "input-jscam")))]
 pub mod js_camera;
+mod platform_resolver;
 
 pub use nokhwa_core::pixel_format::FormatDecoder;
+#[cfg(feature = "output-async")]
+#[cfg_attr(feature = "docs-features", doc(cfg(feature = "output-async")))]
+pub mod async_camera;
 mod query;
 /// A camera that runs in a different thread and can call your code based on callbacks.
 #[cfg(feature = "output-threaded")]
 #[cfg_attr(feature = "docs-features", doc(cfg(feature = "output-threaded")))]
 pub mod threaded;
+pub mod decoders;
 
 pub use camera::Camera;
 pub use init::*;

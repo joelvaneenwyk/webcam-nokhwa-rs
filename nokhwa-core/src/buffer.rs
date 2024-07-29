@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 
-use crate::{
-    error::NokhwaError,
-    pixel_format::FormatDecoder,
-    types::{FrameFormat, Resolution},
-};
+use crate::{ types::Resolution};
 use bytes::Bytes;
-use image::ImageBuffer;
 
 /// A buffer returned by a camera to accommodate custom decoding.
 /// Contains information of Resolution, the buffer's [`FrameFormat`], and the buffer.
@@ -63,12 +58,21 @@ impl Buffer {
         self.buffer.clone()
     }
 
-    /// Get the [`FrameFormat`] of this buffer.
+    /// Get the [`SourceFrameFormat`] of this buffer.
     #[must_use]
     pub fn source_frame_format(&self) -> FrameFormat {
         self.source_frame_format
     }
+}
 
+#[cfg(feature = "opencv-mat")]
+use crate::error::NokhwaError;
+#[cfg(feature = "opencv-mat")]
+use image::ImageBuffer;
+
+#[cfg(feature = "opencv-mat")]
+impl Buffer {
+    
     /// Decodes a image with allocation using the provided [`FormatDecoder`].
     /// # Errors
     /// Will error when the decoding fails.
@@ -86,7 +90,7 @@ impl Buffer {
                 })?;
         Ok(image)
     }
-
+    
     /// Decodes a image with allocation using the provided [`FormatDecoder`] into a `buffer`.
     /// # Errors
     /// Will error when the decoding fails, or the provided buffer is too small.
@@ -120,7 +124,7 @@ impl Buffer {
     ) -> Result<opencv::core::Mat, NokhwaError> {
         use image::Pixel;
         use opencv::core::{Mat, Mat_AUTO_STEP, CV_8UC1, CV_8UC2, CV_8UC3, CV_8UC4};
-
+    
         let array_type = match F::Output::CHANNEL_COUNT {
             1 => CV_8UC1,
             2 => CV_8UC2,
@@ -134,7 +138,7 @@ impl Buffer {
                 })
             }
         };
-
+    
         unsafe {
             // TODO: Look into removing this unnecessary copy.
             let mat1 = Mat::new_rows_cols_with_data(
@@ -145,11 +149,11 @@ impl Buffer {
                 Mat_AUTO_STEP,
             )
             .map_err(|why| NokhwaError::ProcessFrameError {
-                src: FrameFormat::RAWRGB,
+                src: FrameFormat::Rgb8,
                 destination: "OpenCV Mat".to_string(),
                 error: why.to_string(),
             })?;
-
+    
             Ok(mat1)
         }
     }
@@ -240,5 +244,63 @@ impl Buffer {
         buffer.copy_to_slice(&mut bytes);
 
         Ok(())
+    }
+}
+
+#[cfg(feature = "wgpu-types")]
+use wgpu::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, ImageCopyTexture, TextureAspect, ImageDataLayout};
+use crate::frame_format::FrameFormat;
+
+#[cfg(feature = "wgpu-types")]
+impl Buffer {
+    #[cfg_attr(feature = "docs-features", doc(cfg(feature = "wgpu-types")))]
+    /// Directly copies a frame to a Wgpu texture. This will automatically convert the frame into a RGBA frame.
+    /// # Errors
+    /// If the frame cannot be captured or the resolution is 0 on any axis, this will error.
+    fn frame_texture<'a>(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        label: Option<&'a str>,
+    ) -> Result<wgpu::Texture, NokhwaError> {
+        let frame = self.frame()?.decode_image::<RgbAFormat>()?;
+    
+        let texture_size = Extent3d {
+            width: frame.width(),
+            height: frame.height(),
+            depth_or_array_layers: 1,
+        };
+    
+        let texture = device.create_texture(&TextureDescriptor {
+            label,
+            size: texture_size,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: TextureDimension::D2,
+            format: TextureFormat::Rgba8UnormSrgb,
+            usage: TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_DST,
+            view_formats: &[TextureFormat::Rgba8UnormSrgb],
+        });
+    
+        let width_nonzero = 4 * frame.width();
+        let height_nonzero = frame.height();
+    
+        queue.write_texture(
+            ImageCopyTexture {
+                texture: &texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: TextureAspect::All,
+            },
+            &frame,
+            ImageDataLayout {
+                offset: 0,
+                bytes_per_row: width_nonzero,
+                rows_per_image: height_nonzero,
+            },
+            texture_size,
+        );
+    
+        Ok(texture)
     }
 }

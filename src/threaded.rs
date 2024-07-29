@@ -131,7 +131,7 @@ impl CallbackCamera {
     /// This will reset the current stream if used while stream is opened.
     /// # Errors
     /// If you started the stream and the camera rejects the new camera format, this will return an error.
-    #[deprecated(since = "0.10.0", note = "please use `set_camera_requset` instead.")]
+    #[deprecated(since = "0.10.0", note = "please use `set_camera_request` instead.")]
     pub fn set_camera_format(&mut self, new_fmt: CameraFormat) -> Result<(), NokhwaError> {
         *self
             .last_frame_captured
@@ -162,7 +162,7 @@ impl CallbackCamera {
     /// This will return the new [`CameraFormat`]
     /// # Errors
     /// If nothing fits the requested criteria, this will return an error.
-    pub fn set_camera_requset(
+    pub fn set_camera_request(
         &mut self,
         request: RequestedFormat,
     ) -> Result<CameraFormat, NokhwaError> {
@@ -305,7 +305,7 @@ impl CallbackCamera {
     }
 
     /// Sets the control to `control` in the camera.
-    /// Usually, the pipeline is calling [`camera_control()`](crate::camera_traits::CaptureBackendTrait::camera_control), getting a camera control that way
+    /// Usually, the pipeline is calling [`camera_control()`](crate::camera_traits::CaptureTrait::camera_control), getting a camera control that way
     /// then calling [`value()`](crate::utils::CameraControl::value()) to get a [`ControlValueSetter`](crate::utils::ControlValueSetter) and setting the value that way.
     /// # Errors
     /// If the `control` is not supported, the value is invalid (less than min, greater than max, not in step), or there was an error setting the control,

@@ -24,7 +24,7 @@ use nokhwa_core::{
     buffer::Buffer,
     error::NokhwaError,
     pixel_format::RgbFormat,
-    traits::CaptureBackendTrait,
+    traits::CaptureTrait,
     types::{
         ApiBackend, CameraControl, CameraFormat, CameraIndex, CameraInfo, ControlValueSetter,
         FrameFormat, KnownCameraControl, RequestedFormat, RequestedFormatType, Resolution,
@@ -36,7 +36,7 @@ use std::{ffi::CString, sync::Arc};
 use std::{borrow::Cow, collections::HashMap};
 
 /// The backend struct that interfaces with V4L2.
-/// To see what this does, please see [`CaptureBackendTrait`].
+/// To see what this does, please see [`CaptureTrait`].
 /// # Quirks
 /// - While working with `iOS` is allowed, it is not officially supported and may not work.
 /// - You **must** call [`nokhwa_initialize`](crate::nokhwa_initialize) **before** doing anything with `AVFoundation`.
@@ -121,7 +121,7 @@ impl AVFoundationCaptureDevice {
 }
 
 #[cfg(target_os = "macos")]
-impl CaptureBackendTrait for AVFoundationCaptureDevice {
+impl CaptureTrait for AVFoundationCaptureDevice {
     fn backend(&self) -> ApiBackend {
         ApiBackend::AVFoundation
     }
@@ -353,7 +353,7 @@ impl Drop for AVFoundationCaptureDevice {
 }
 
 /// The backend struct that interfaces with V4L2.
-/// To see what this does, please see [`CaptureBackendTrait`].
+/// To see what this does, please see [`CaptureTrait`].
 /// # Quirks
 /// - While working with `iOS` is allowed, it is not officially supported and may not work.
 /// - You **must** call [`nokhwa_initialize`](crate::nokhwa_initialize) **before** doing anything with `AVFoundation`.
@@ -396,7 +396,7 @@ impl AVFoundationCaptureDevice {
 
 #[cfg(not(target_os = "macos"))]
 #[allow(unreachable_code)]
-impl CaptureBackendTrait for AVFoundationCaptureDevice {
+impl CaptureTrait for AVFoundationCaptureDevice {
     fn backend(&self) -> ApiBackend {
         todo!()
     }

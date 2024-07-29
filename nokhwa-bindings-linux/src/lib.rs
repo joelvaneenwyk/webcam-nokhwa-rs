@@ -16,10 +16,11 @@
 
 #[cfg(target_os = "linux")]
 mod internal {
+    use nokhwa_core::format_request::FormatFilter;
     use nokhwa_core::{
         buffer::Buffer,
         error::NokhwaError,
-        traits::CaptureBackendTrait,
+        traits::CaptureTrait,
         types::{
             ApiBackend, CameraControl, CameraFormat, CameraIndex, CameraInfo,
             ControlValueDescription, ControlValueSetter, FrameFormat, KnownCameraControl,
@@ -254,11 +255,12 @@ mod internal {
     }
 
     /// The backend struct that interfaces with V4L2.
-    /// To see what this does, please see [`CaptureBackendTrait`].
+    /// To see what this does, please see [`CaptureTrait`].
     /// # Quirks
-    /// - Calling [`set_resolution()`](CaptureBackendTrait::set_resolution), [`set_frame_rate()`](CaptureBackendTrait::set_frame_rate), or [`set_frame_format()`](CaptureBackendTrait::set_frame_format) each internally calls [`set_camera_format()`](CaptureBackendTrait::set_camera_format).
+    /// - Calling [`set_resolution()`](CaptureTrait::set_resolution), [`set_frame_rate()`](CaptureTrait::set_frame_rate), or [`set_frame_format()`](CaptureTrait::set_frame_format) each internally calls [`set_camera_format()`](CaptureTrait::set_camera_format).
     pub struct V4LCaptureDevice<'a> {
-        camera_format: CameraFormat,
+        init: bool,
+        camera_format: Option<CameraFormat>,
         camera_info: CameraInfo,
         device: SharedDevice,
         stream_handle: Option<MmapStream<'a>>,
@@ -497,7 +499,15 @@ mod internal {
         }
     }
 
-    impl<'a> CaptureBackendTrait for V4LCaptureDevice<'a> {
+    impl<'a> CaptureTrait for V4LCaptureDevice<'a> {
+        fn init(&mut self) -> Result<(), NokhwaError> {
+            todo!()
+        }
+
+        fn init_with_format(&mut self, format: FormatFilter) -> Result<CameraFormat, NokhwaError> {
+            todo!()
+        }
+
         fn backend(&self) -> ApiBackend {
             ApiBackend::Video4Linux
         }
@@ -908,22 +918,30 @@ mod internal {
 
     fn fourcc_to_frameformat(fourcc: FourCC) -> Option<FrameFormat> {
         match fourcc.str().ok()? {
-            "YUYV" => Some(FrameFormat::YUYV),
-            "MJPG" => Some(FrameFormat::MJPEG),
-            "GRAY" => Some(FrameFormat::GRAY),
-            "RGB3" => Some(FrameFormat::RAWRGB),
-            "NV12" => Some(FrameFormat::NV12),
+            "YUYV" => Some(FrameFormat::Yuv422),
+            "UYVY" => Some(FrameFormat::Uyv422),
+            "YV12" => Some(FrameFormat::Yv12),
+            "MJPG" => Some(FrameFormat::MJpeg),
+            "GRAY" => Some(FrameFormat::Luma8),
+            "RGB3" => Some(FrameFormat::Rgb8),
+            "NV12" => Some(FrameFormat::Nv12),
+            "H264" => Some(FrameFormat::H264),
+            "AVC1" => Some(FrameFormat::Avc1),
+            "H263" => Some(FrameFormat::H263),
+            "XVID" => Some(FrameFormat::XVid),
+            "VP80" => Some(FrameFormat::VP8),
+            "VP90" => Some(FrameFormat::VP9),
+            "MPG1" => Some(FrameFormat::Mpeg1),
+            "MPG2" => Some(FrameFormat::Mpeg2),
+            "MPG4" => Some(FrameFormat::Mpeg4),
             _ => None,
         }
     }
+    
 
     fn frameformat_to_fourcc(fourcc: FrameFormat) -> FourCC {
         match fourcc {
-            FrameFormat::MJPEG => FourCC::new(b"MJPG"),
-            FrameFormat::YUYV => FourCC::new(b"YUYV"),
-            FrameFormat::GRAY => FourCC::new(b"GRAY"),
-            FrameFormat::RAWRGB => FourCC::new(b"RGB3"),
-            FrameFormat::NV12 => FourCC::new(b"NV12"),
+            
         }
     }
 }
@@ -932,7 +950,7 @@ mod internal {
 mod internal {
     use nokhwa_core::buffer::Buffer;
     use nokhwa_core::error::NokhwaError;
-    use nokhwa_core::traits::CaptureBackendTrait;
+    use nokhwa_core::traits::CaptureTrait;
     use nokhwa_core::types::{
         ApiBackend, CameraControl, CameraFormat, CameraIndex, CameraInfo, ControlValueSetter,
         FrameFormat, KnownCameraControl, RequestedFormat, Resolution,
@@ -956,9 +974,9 @@ mod internal {
     }
 
     /// The backend struct that interfaces with V4L2.
-    /// To see what this does, please see [`CaptureBackendTrait`].
+    /// To see what this does, please see [`CaptureTrait`].
     /// # Quirks
-    /// - Calling [`set_resolution()`](CaptureBackendTrait::set_resolution), [`set_frame_rate()`](CaptureBackendTrait::set_frame_rate), or [`set_frame_format()`](CaptureBackendTrait::set_frame_format) each internally calls [`set_camera_format()`](CaptureBackendTrait::set_camera_format).
+    /// - Calling [`set_resolution()`](CaptureTrait::set_resolution), [`set_frame_rate()`](CaptureTrait::set_frame_rate), or [`set_frame_format()`](CaptureTrait::set_frame_format) each internally calls [`set_camera_format()`](CaptureTrait::set_camera_format).
     pub struct V4LCaptureDevice<'a> {
         __holder: PhantomData<&'a str>,
     }
@@ -1002,7 +1020,7 @@ mod internal {
     }
 
     #[allow(unused_variables)]
-    impl<'a> CaptureBackendTrait for V4LCaptureDevice<'a> {
+    impl<'a> CaptureTrait for V4LCaptureDevice<'a> {
         fn backend(&self) -> ApiBackend {
             ApiBackend::Video4Linux
         }

@@ -25,7 +25,7 @@ Most likely, you will only use functionality provided by the `Camera` struct. If
 // first camera in system
 let index = CameraIndex::Index(0);
 // request the absolute highest resolution CameraFormat that can be decoded to RGB.
-let requested = RequestedFormat::<RgbFormat>::new(RequestedFormatType::AbsoluteHighestFrameRate);
+let requested = RequestedFormat::new::<RgbFormat>(RequestedFormatType::AbsoluteHighestFrameRate);
 // make the camera
 let mut camera = Camera::new(index, requested).unwrap();
 

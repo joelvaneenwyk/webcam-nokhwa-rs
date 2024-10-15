@@ -1,164 +1,22 @@
 use crate::{
     error::NokhwaError,
-    frame_format::{FrameFormat},
+    frame_format::FrameFormat,
 };
 #[cfg(feature = "serialize")]
 use serde::{Deserialize, Serialize};
 use std::{
-    fmt::{
+    borrow::Borrow, cmp::Ordering, fmt::{
         Debug,
         Display,
         Formatter
-    },
-    borrow::Borrow,
-    cmp::Ordering,
-    hash::{Hash, Hasher}
+    }, hash::{Hash, Hasher}, ops::{Add, Deref, DerefMut, Sub}
 };
 use crate::traits::Distance;
-
-/// Creates a range of values.
-///
-/// Inclusive by default.
-#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
-pub struct Range<T>
-{
-    minimum: Option<T>,
-    lower_inclusive: bool,
-    maximum: Option<T>,
-    upper_inclusive: bool,
-    preferred: Option<T>,
-}
-
-impl<T> Range<T>
-where
-    T: Copy + Clone + Debug + PartialOrd + PartialEq,
-{
-    /// Create an upper and lower inclusive [`Range`]
-    pub fn new(preferred: Option<T>, min: Option<T>, max: Option<T>) -> Self {
-        Self {
-            minimum: min,
-            lower_inclusive: true,
-            maximum: max,
-            upper_inclusive: true,
-            preferred,
-        }
-    }
-
-    pub fn with_inclusive(
-        preferred: Option<T>,
-        min: Option<T>,
-        lower_inclusive: bool,
-        max: Option<T>,
-        upper_inclusive: bool,
-    ) -> Self {
-        Self {
-            minimum: min,
-            lower_inclusive,
-            maximum: max,
-            upper_inclusive,
-            preferred,
-        }
-    }
-
-    pub fn with_preferred(preferred: T) -> Self {
-        Self {
-            minimum: None,
-            lower_inclusive: true,
-            maximum: None,
-            upper_inclusive: true,
-            preferred: Some(preferred),
-        }
-    }
-
-    pub fn in_range(&self, item: T) -> bool {
-        if let Some(pref) = self.preferred {
-            if pref == item {
-                return true
-            }
-        }
-
-        if let Some(min) = self.minimum {
-            let test = if self.lower_inclusive {
-                min >= item
-            } else {
-                min > item
-            };
-            if test {
-                return false;
-            }
-        }
-
-        if let Some(max) = self.maximum {
-            let test = if self.lower_inclusive {
-                max <= item
-            } else {
-                max < item
-            };
-            if test {
-                return false;
-            }
-        }
-
-        true
-    }
-
-
-    pub fn set_minimum(&mut self, minimum: Option<T>) {
-        self.minimum = minimum;
-    }
-    pub fn set_lower_inclusive(&mut self, lower_inclusive: bool) {
-        self.lower_inclusive = lower_inclusive;
-    }
-    pub fn set_maximum(&mut self, maximum: Option<T>) {
-        self.maximum = maximum;
-    }
-    pub fn set_upper_inclusive(&mut self, upper_inclusive: bool) {
-        self.upper_inclusive = upper_inclusive;
-    }
-    pub fn set_preferred(&mut self, preferred: T) {
-        self.preferred = Some(preferred);
-    }
-
-    pub fn reset_preferred(&mut self) {
-        self.preferred = None;
-    }
-    pub fn minimum(&self) -> Option<T> {
-        self.minimum
-    }
-    pub fn lower_inclusive(&self) -> bool {
-        self.lower_inclusive
-    }
-    pub fn maximum(&self) -> Option<T> {
-        self.maximum
-    }
-    pub fn upper_inclusive(&self) -> bool {
-        self.upper_inclusive
-    }
-    pub fn preferred(&self) -> Option<T> {
-        self.preferred
-    }
-}
-
-impl<T> Default for Range<T>
-where
-    T: Default,
-{
-    fn default() -> Self {
-        Range {
-            minimum: None,
-            lower_inclusive: true,
-            maximum: None,
-            upper_inclusive: true,
-            preferred: None,
-        }
-    }
-}
-
 
 
 /// Describes the index of the camera.
 /// - Index: A numbered index
-/// - String: A string, used for `IPCameras`.
+/// - String: A string, used for `IPCameras` or on the Browser as DeviceIDs.
 #[derive(Clone, Debug, Hash, Ord, PartialOrd, Eq, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum CameraIndex {
@@ -237,7 +95,6 @@ impl TryFrom<CameraIndex> for usize {
 /// Note: the [`Ord`] implementation of this struct is flipped from highest to lowest.
 /// # JS-WASM
 /// This is exported as `JSResolution`
-#[cfg_attr(feature = "output-wasm", wasm_bindgen)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 #[derive(Copy, Clone, Debug, Default, Hash, Eq, PartialEq)]
 pub struct Resolution {
@@ -245,13 +102,9 @@ pub struct Resolution {
     pub height_y: u32,
 }
 
-#[cfg_attr(feature = "output-wasm", wasm_bindgen)]
 impl Resolution {
     /// Create a new resolution from 2 image size coordinates.
-    /// # JS-WASM
-    /// This is exported as a constructor for [`Resolution`].
     #[must_use]
-    #[cfg_attr(feature = "output-wasm", wasm_bindgen(constructor))]
     pub fn new(x: u32, y: u32) -> Self {
         Resolution {
             width_x: x,
@@ -260,20 +113,14 @@ impl Resolution {
     }
 
     /// Get the width of Resolution
-    /// # JS-WASM
-    /// This is exported as `get_Width`.
     #[must_use]
-    #[cfg_attr(feature = "output-wasm", wasm_bindgen(getter = Width))]
     #[inline]
     pub fn width(self) -> u32 {
         self.width_x
     }
 
     /// Get the height of Resolution
-    /// # JS-WASM
-    /// This is exported as `get_Height`.
     #[must_use]
-    #[cfg_attr(feature = "output-wasm", wasm_bindgen(getter = Height))]
     #[inline]
     pub fn height(self) -> u32 {
         self.height_y
@@ -281,7 +128,6 @@ impl Resolution {
 
     /// Get the x (width) of Resolution
     #[must_use]
-    #[cfg_attr(feature = "output-wasm", wasm_bindgen(skip))]
     #[inline]
     pub fn x(self) -> u32 {
         self.width_x
@@ -289,10 +135,14 @@ impl Resolution {
 
     /// Get the y (height) of Resolution
     #[must_use]
-    #[cfg_attr(feature = "output-wasm", wasm_bindgen(skip))]
     #[inline]
     pub fn y(self) -> u32 {
         self.height_y
+    }
+
+    #[must_use]
+    pub fn aspect_ratio(&self) -> f64 {
+        f64::from(self.width_x) / f64::from(self.height_y)
     }
 }
 
@@ -330,139 +180,95 @@ impl Distance<u32> for Resolution {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-/// The frame rate of a camera. DO NOT CONSTRUCT THIS ENUM DIRECTLY. YOU WILL VIOLATE INVARIANTS. Use [`FrameRate::new_integer`], [`FrameRate::new_fraction`], or [`FrameRate::new_float`] instead.
-pub enum FrameRate {
-    /// The driver reports the frame rate as a clean integer (e.g. 30 FPS).
-    Integer(u32),
-    /// The driver reports the frame rate as a floating point number (e.g. 29.97 FPS)
-    Float(f32),
-    /// The driver reports the frame rate as a fraction (e.g. 2997/1000 FPS)
-    Fraction {
-        numerator: u16,
-        denominator: u16,
-    }
-}
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
+pub struct FrameRate(pub f32);
 
 impl FrameRate {
-    pub fn new_integer(fps: u32) -> Result<Self, NokhwaError> {
-        if fps == 0 {
-            return Err(NokhwaError::StructureError { structure: "FrameRate".to_string(), error: "Framerate cannot be 0".to_string() })
-        }
-
-        Ok(FrameRate::Integer(fps))
+    #[must_use]
+    pub fn new(fps: f32) -> Self {
+        Self(fps)
     }
 
-    pub fn new_float(fps: f32) -> Result<Self, NokhwaError> {
-        if fps.is_nan() || fps.is_infinite() || fps.is_sign_negative() || (fps > f32::EPSILON) {
-            return Err(NokhwaError::StructureError { structure: "FrameRate".to_string(), error: "Invalid F32 FrameRate".to_string() })
-        }
-
-        Ok(FrameRate::Float(fps))
-    }
-
-    pub fn new_fraction(numerator: u16, denominator: u16) -> Result<Self, NokhwaError> {
-        if numerator == 0 || denominator == 0 {
-            return Err(NokhwaError::StructureError { structure: "FrameRate".to_string(), error: "Invalid Fraction (denominator or numerator is 0)".to_string() })
-        }
-
-        Ok(
-            FrameRate::Fraction {
-                numerator,
-                denominator,
-            }
-        )
-    }
-
-    pub fn as_float(&self) -> f32 {
-        match self {
-            FrameRate::Integer(fps) => *fps as f32,
-            FrameRate::Float(fps) => *fps,
-            FrameRate::Fraction { numerator, denominator } => (*numerator as f32) / (*denominator as f32)
-        }
-    }
-
-    pub fn as_u32(&self) -> u32 {
-        match self {
-            FrameRate::Integer(fps) => *fps,
-            FrameRate::Float(fps) => *fps as u32,
-            FrameRate::Fraction { numerator, denominator } => (numerator / denominator) as u32,
-        }
+    #[must_use]
+    pub fn frame_rate(&self) -> f32 {
+        self.0
     }
 }
 
-impl Default for FrameRate {
-    fn default() -> Self {
-        FrameRate::Integer(30)
+impl Deref for FrameRate {
+    type Target = f32;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
-impl PartialOrd for FrameRate {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        let this_float = self.as_float();
-        let other = other.as_float();
-        this_float.partial_cmp(&other)
+impl DerefMut for FrameRate {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
 impl Hash for FrameRate {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        match self {
-            FrameRate::Integer(i) => {
-                state.write_u32(*i)
-            }
-            FrameRate::Float(f) => {
-                state.write(f.to_string().as_bytes())
-            }
-            FrameRate::Fraction { denominator, numerator } => {
-                state.write_u16(*denominator);
-                state.write_u16(*numerator);
-            }
-        }
+        state.write_u32(self.0.to_bits());
+    }
+}
+
+impl Default for FrameRate {
+    fn default() -> Self {
+        FrameRate(30.0)
     }
 }
 
 impl Display for FrameRate {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            FrameRate::Integer(fps) => write!(f, "Framerate: {fps} FPS"),
-            FrameRate::Float(fps) => write!(f, "Framerate: {fps} FPS"),
-            FrameRate::Fraction { .. } => {
-                let as_float = self.as_float();
-                write!(f, "Framerate: {as_float} FPS")
-            }
-        }
+        write!(f, "{} FPS", self.0)
     }
 }
 
-impl Distance<f32> for FrameRate {
-    fn distance_from(&self, other: &Self) -> f32 {
-        let self_as_float = self.as_float();
-        let other_as_float = other.as_float();
+impl Add for FrameRate {
+    type Output = FrameRate;
 
-        self_as_float.powi(2) + other_as_float.powi(2)
+    fn add(self, rhs: Self) -> Self::Output {
+        (self.0 + rhs.0).into()
     }
 }
 
-impl From<u32> for FrameRate {
-    fn from(value: u32) -> Self {
-        FrameRate::Integer(value)
+impl Add for &FrameRate {
+    type Output = FrameRate;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        (self.0 + rhs.0).into()
+    }
+}
+
+
+impl Sub for FrameRate {
+    type Output = FrameRate;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        (self.0 - rhs.0).into()
+    }
+}
+
+impl Sub for &FrameRate {
+    type Output = FrameRate;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        (self.0 - rhs.0).into()
     }
 }
 
 impl From<f32> for FrameRate {
     fn from(value: f32) -> Self {
-        FrameRate::Float(value)
+        Self(value)
     }
 }
 
-impl From<(u16, u16)> for FrameRate {
-    fn from(value: (u16, u16)) -> Self {
-        FrameRate::Fraction {
-            numerator: value.0,
-            denominator: value.1,
-        }
+impl From<FrameRate> for f32 {
+    fn from(value: FrameRate) -> Self {
+        value.0
     }
 }
 
@@ -551,7 +357,7 @@ impl Default for CameraFormat {
         CameraFormat {
             resolution: Resolution::new(640, 480),
             format: FrameFormat::MJpeg,
-            frame_rate: FrameRate::Integer(30),
+            frame_rate: FrameRate(30.),
         }
     }
 }
@@ -570,7 +376,6 @@ impl Display for CameraFormat {
 /// `description` amd `misc` may contain information that may differ from backend to backend. Refer to each backend for details.
 /// `index` is a camera's index given to it by (usually) the OS usually in the order it is known to the system.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd)]
-#[cfg_attr(feature = "output-wasm", wasm_bindgen)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct CameraInfo {
     human_name: String,
@@ -579,13 +384,11 @@ pub struct CameraInfo {
     index: CameraIndex,
 }
 
-#[cfg_attr(feature = "output-wasm", wasm_bindgen(js_class = CameraInfo))]
 impl CameraInfo {
     /// Create a new [`CameraInfo`].
     /// # JS-WASM
     /// This is exported as a constructor for [`CameraInfo`].
     #[must_use]
-    #[cfg_attr(feature = "output-wasm", wasm_bindgen(constructor))]
     // OK, i just checkeed back on this code. WTF was I on when I wrote `&(impl AsRef<str> + ?Sized)` ????
     // I need to get on the same shit that my previous self was on, because holy shit that stuff is strong as FUCK!
     // Finally fixed this insanity. Hopefully I didnt torment anyone by actually putting this in a stable release.
@@ -602,10 +405,6 @@ impl CameraInfo {
     /// # JS-WASM
     /// This is exported as a `get_HumanReadableName`.
     #[must_use]
-    #[cfg_attr(
-    feature = "output-wasm",
-    wasm_bindgen(getter = HumanReadableName)
-    )]
     // yes, i know, unnecessary alloc this, unnecessary alloc that
     // but wasm bindgen
     pub fn human_name(&self) -> String {
@@ -615,10 +414,6 @@ impl CameraInfo {
     /// Set the device info's human name.
     /// # JS-WASM
     /// This is exported as a `set_HumanReadableName`.
-    #[cfg_attr(
-    feature = "output-wasm",
-    wasm_bindgen(setter = HumanReadableName)
-    )]
     pub fn set_human_name(&mut self, human_name: &str) {
         self.human_name = human_name.to_string();
     }
@@ -627,7 +422,6 @@ impl CameraInfo {
     /// # JS-WASM
     /// This is exported as a `get_Description`.
     #[must_use]
-    #[cfg_attr(feature = "output-wasm", wasm_bindgen(getter = Description))]
     pub fn description(&self) -> &str {
         self.description.borrow()
     }
@@ -635,7 +429,6 @@ impl CameraInfo {
     /// Set the device info's description.
     /// # JS-WASM
     /// This is exported as a `set_Description`.
-    #[cfg_attr(feature = "output-wasm", wasm_bindgen(setter = Description))]
     pub fn set_description(&mut self, description: &str) {
         self.description = description.to_string();
     }
@@ -644,7 +437,6 @@ impl CameraInfo {
     /// # JS-WASM
     /// This is exported as a `get_MiscString`.
     #[must_use]
-    #[cfg_attr(feature = "output-wasm", wasm_bindgen(getter = MiscString))]
     pub fn misc(&self) -> String {
         self.misc.clone()
     }
@@ -652,7 +444,6 @@ impl CameraInfo {
     /// Set the device info's misc.
     /// # JS-WASM
     /// This is exported as a `set_MiscString`.
-    #[cfg_attr(feature = "output-wasm", wasm_bindgen(setter = MiscString))]
     pub fn set_misc(&mut self, misc: &str) {
         self.misc = misc.to_string();
     }
@@ -661,7 +452,6 @@ impl CameraInfo {
     /// # JS-WASM
     /// This is exported as a `get_Index`.
     #[must_use]
-    #[cfg_attr(feature = "output-wasm", wasm_bindgen(getter = Index))]
     pub fn index(&self) -> &CameraIndex {
         &self.index
     }
@@ -669,7 +459,6 @@ impl CameraInfo {
     /// Set the device info's index.
     /// # JS-WASM
     /// This is exported as a `set_Index`.
-    #[cfg_attr(feature = "output-wasm", wasm_bindgen(setter = Index))]
     pub fn set_index(&mut self, index: CameraIndex) {
         self.index = index;
     }
@@ -704,454 +493,6 @@ impl Display for CameraInfo {
     }
 }
 
-/// The list of known camera controls to the library. <br>
-/// These can control the picture brightness, etc. <br>
-/// Note that not all backends/devices support all these. Run [`supported_camera_controls()`](crate::traits::CaptureTrait::camera_controls) to see which ones can be set.
-#[derive(Copy, Clone, Debug, Hash, Ord, PartialOrd, Eq, PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-pub enum KnownCameraControl {
-    Brightness,
-    Contrast,
-    Hue,
-    Saturation,
-    Sharpness,
-    Gamma,
-    WhiteBalance,
-    BacklightComp,
-    Gain,
-    Pan,
-    Tilt,
-    Zoom,
-    Exposure,
-    Iris,
-    Focus,
-    /// Other camera control. Listed is the ID.
-    /// Wasteful, however is needed for a unified API across Windows, Linux, and MacOSX due to Microsoft's usage of GUIDs.
-    ///
-    /// THIS SHOULD ONLY BE USED WHEN YOU KNOW THE PLATFORM THAT YOU ARE RUNNING ON.
-    Other(u128),
-}
-
-/// All camera controls in an array.
-#[must_use]
-pub const fn all_known_camera_controls() -> [KnownCameraControl; 15] {
-    [
-        KnownCameraControl::Brightness,
-        KnownCameraControl::Contrast,
-        KnownCameraControl::Hue,
-        KnownCameraControl::Saturation,
-        KnownCameraControl::Sharpness,
-        KnownCameraControl::Gamma,
-        KnownCameraControl::WhiteBalance,
-        KnownCameraControl::BacklightComp,
-        KnownCameraControl::Gain,
-        KnownCameraControl::Pan,
-        KnownCameraControl::Tilt,
-        KnownCameraControl::Zoom,
-        KnownCameraControl::Exposure,
-        KnownCameraControl::Iris,
-        KnownCameraControl::Focus,
-    ]
-}
-
-impl Display for KnownCameraControl {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", &self)
-    }
-}
-
-/// This tells you weather a [`KnownCameraControl`] is automatically managed by the OS/Driver
-/// or manually managed by you, the programmer.
-#[derive(Copy, Clone, Debug, Hash, Ord, PartialOrd, Eq, PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-pub enum KnownCameraControlFlag {
-    Automatic,
-    Manual,
-    Continuous,
-    ReadOnly,
-    WriteOnly,
-    Volatile,
-    Disabled,
-}
-
-impl Display for KnownCameraControlFlag {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self:?}")
-    }
-}
-
-/// The values for a [`CameraControl`].
-///
-/// This provides a wide range of values that can be used to control a camera.
-#[derive(Clone, Debug, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-pub enum ControlValueDescription {
-    None,
-    Integer {
-        value: i64,
-        default: i64,
-        step: i64,
-    },
-    IntegerRange {
-        min: i64,
-        max: i64,
-        value: i64,
-        step: i64,
-        default: i64,
-    },
-    Float {
-        value: f64,
-        default: f64,
-        step: f64,
-    },
-    FloatRange {
-        min: f64,
-        max: f64,
-        value: f64,
-        step: f64,
-        default: f64,
-    },
-    Boolean {
-        value: bool,
-        default: bool,
-    },
-    String {
-        value: String,
-        default: Option<String>,
-    },
-    Bytes {
-        value: Vec<u8>,
-        default: Vec<u8>,
-    },
-    KeyValuePair {
-        key: i128,
-        value: i128,
-        default: (i128, i128),
-    },
-    Point {
-        value: (f64, f64),
-        default: (f64, f64),
-    },
-    Enum {
-        value: i64,
-        possible: Vec<i64>,
-        default: i64,
-    },
-    RGB {
-        value: (f64, f64, f64),
-        max: (f64, f64, f64),
-        default: (f64, f64, f64),
-    },
-    StringList {
-        value: String,
-        availible: Vec<String>,
-    },
-}
-
-impl ControlValueDescription {
-    /// Get the value of this [`ControlValueDescription`]
-    #[must_use]
-    pub fn value(&self) -> ControlValueSetter {
-        match self {
-            ControlValueDescription::None => ControlValueSetter::None,
-            ControlValueDescription::Integer { value, .. }
-            | ControlValueDescription::IntegerRange { value, .. } => {
-                ControlValueSetter::Integer(*value)
-            }
-            ControlValueDescription::Float { value, .. }
-            | ControlValueDescription::FloatRange { value, .. } => {
-                ControlValueSetter::Float(*value)
-            }
-            ControlValueDescription::Boolean { value, .. } => ControlValueSetter::Boolean(*value),
-            ControlValueDescription::String { value, .. } => {
-                ControlValueSetter::String(value.clone())
-            }
-            ControlValueDescription::Bytes { value, .. } => {
-                ControlValueSetter::Bytes(value.clone())
-            }
-            ControlValueDescription::KeyValuePair { key, value, .. } => {
-                ControlValueSetter::KeyValue(*key, *value)
-            }
-            ControlValueDescription::Point { value, .. } => {
-                ControlValueSetter::Point(value.0, value.1)
-            }
-            ControlValueDescription::Enum { value, .. } => ControlValueSetter::EnumValue(*value),
-            ControlValueDescription::RGB { value, .. } => {
-                ControlValueSetter::RGB(value.0, value.1, value.2)
-            }
-            ControlValueDescription::StringList { value, .. } => {
-                ControlValueSetter::StringList(value.clone())
-            }
-        }
-    }
-
-    /// Verifies if the [setter](ControlValueSetter) is valid for the provided [`ControlValueDescription`].
-    /// - `true` => Is valid.
-    /// - `false` => Is not valid.
-    ///
-    /// If the step is 0, it will automatically return `true`.
-    #[must_use]
-    pub fn verify_setter(&self, setter: &ControlValueSetter) -> bool {
-        match self {
-            ControlValueDescription::None => setter.as_none().is_some(),
-            ControlValueDescription::Integer {
-                value,
-                default,
-                step,
-            } => {
-                if *step == 0 {
-                    return true;
-                }
-                match setter.as_integer() {
-                    Some(i) => (i + default) % step == 0 || (i + value) % step == 0,
-                    None => false,
-                }
-            }
-            ControlValueDescription::IntegerRange {
-                min,
-                max,
-                value,
-                step,
-                default,
-            } => {
-                if *step == 0 {
-                    return true;
-                }
-                match setter.as_integer() {
-                    Some(i) => {
-                        ((i + default) % step == 0 || (i + value) % step == 0)
-                            && i >= min
-                            && i <= max
-                    }
-                    None => false,
-                }
-            }
-            ControlValueDescription::Float {
-                value,
-                default,
-                step,
-            } => {
-                if step.abs() == 0_f64 {
-                    return true;
-                }
-                match setter.as_float() {
-                    Some(f) => (f - default).abs() % step == 0_f64 || (f - value) % step == 0_f64,
-                    None => false,
-                }
-            }
-            ControlValueDescription::FloatRange {
-                min,
-                max,
-                value,
-                step,
-                default,
-            } => {
-                if step.abs() == 0_f64 {
-                    return true;
-                }
-
-                match setter.as_float() {
-                    Some(f) => {
-                        ((f - default).abs() % step == 0_f64 || (f - value) % step == 0_f64)
-                            && f >= min
-                            && f <= max
-                    }
-                    None => false,
-                }
-            }
-            ControlValueDescription::Boolean { .. } => setter.as_boolean().is_some(),
-            ControlValueDescription::String { .. } => setter.as_str().is_some(),
-            ControlValueDescription::Bytes { .. } => setter.as_bytes().is_some(),
-            ControlValueDescription::KeyValuePair { .. } => setter.as_key_value().is_some(),
-            ControlValueDescription::Point { .. } => match setter.as_point() {
-                Some(pt) => {
-                    !pt.0.is_nan() && !pt.1.is_nan() && pt.0.is_finite() && pt.1.is_finite()
-                }
-                None => false,
-            },
-            ControlValueDescription::Enum { possible, .. } => match setter.as_enum() {
-                Some(e) => possible.contains(e),
-                None => false,
-            },
-            ControlValueDescription::RGB { max, .. } => match setter.as_rgb() {
-                Some(v) => *v.0 >= max.0 && *v.1 >= max.1 && *v.2 >= max.2,
-                None => false,
-            },
-            ControlValueDescription::StringList { availible, .. } => {
-                availible.contains(&(setter.as_str().unwrap_or("").to_string())) // what the fuck??
-            }
-        }
-
-        // match setter {
-        //     ControlValueSetter::None => {
-        //         matches!(self, ControlValueDescription::None)
-        //     }
-        //     ControlValueSetter::Integer(i) => match self {
-        //         ControlValueDescription::Integer {
-        //             value,
-        //             default,
-        //             step,
-        //         } => (i - default).abs() % step == 0 || (i - value) % step == 0,
-        //         ControlValueDescription::IntegerRange {
-        //             min,
-        //             max,
-        //             value,
-        //             step,
-        //             default,
-        //         } => {
-        //             if value > max || value < min {
-        //                 return false;
-        //             }
-        //
-        //             (i - default) % step == 0 || (i - value) % step == 0
-        //         }
-        //         _ => false,
-        //     },
-        //     ControlValueSetter::Float(f) => match self {
-        //         ControlValueDescription::Float {
-        //             value,
-        //             default,
-        //             step,
-        //         } => (f - default).abs() % step == 0_f64 || (f - value) % step == 0_f64,
-        //         ControlValueDescription::FloatRange {
-        //             min,
-        //             max,
-        //             value,
-        //             step,
-        //             default,
-        //         } => {
-        //             if value > max || value < min {
-        //                 return false;
-        //             }
-        //
-        //             (f - default) % step == 0_f64 || (f - value) % step == 0_f64
-        //         }
-        //         _ => false,
-        //     },
-        //     ControlValueSetter::Boolean(b) => {
-        //
-        //     }
-        //     ControlValueSetter::String(_) => {
-        //         matches!(self, ControlValueDescription::String { .. })
-        //     }
-        //     ControlValueSetter::Bytes(_) => {
-        //         matches!(self, ControlValueDescription::Bytes { .. })
-        //     }
-        //     ControlValueSetter::KeyValue(_, _) => {
-        //         matches!(self, ControlValueDescription::KeyValuePair { .. })
-        //     }
-        //     ControlValueSetter::Point(_, _) => {
-        //         matches!(self, ControlValueDescription::Point { .. })
-        //     }
-        //     ControlValueSetter::EnumValue(_) => {
-        //         matches!(self, ControlValueDescription::Enum { .. })
-        //     }
-        //     ControlValueSetter::RGB(_, _, _) => {
-        //         matches!(self, ControlValueDescription::RGB { .. })
-        //     }
-        // }
-    }
-}
-
-impl Display for ControlValueDescription {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ControlValueDescription::None => {
-                write!(f, "(None)")
-            }
-            ControlValueDescription::Integer {
-                value,
-                default,
-                step,
-            } => {
-                write!(f, "(Current: {value}, Default: {default}, Step: {step})",)
-            }
-            ControlValueDescription::IntegerRange {
-                min,
-                max,
-                value,
-                step,
-                default,
-            } => {
-                write!(
-                    f,
-                    "(Current: {value}, Default: {default}, Step: {step}, Range: ({min}, {max}))",
-                )
-            }
-            ControlValueDescription::Float {
-                value,
-                default,
-                step,
-            } => {
-                write!(f, "(Current: {value}, Default: {default}, Step: {step})",)
-            }
-            ControlValueDescription::FloatRange {
-                min,
-                max,
-                value,
-                step,
-                default,
-            } => {
-                write!(
-                    f,
-                    "(Current: {value}, Default: {default}, Step: {step}, Range: ({min}, {max}))",
-                )
-            }
-            ControlValueDescription::Boolean { value, default } => {
-                write!(f, "(Current: {value}, Default: {default})")
-            }
-            ControlValueDescription::String { value, default } => {
-                write!(f, "(Current: {value}, Default: {default:?})")
-            }
-            ControlValueDescription::Bytes { value, default } => {
-                write!(f, "(Current: {value:x?}, Default: {default:x?})")
-            }
-            ControlValueDescription::KeyValuePair {
-                key,
-                value,
-                default,
-            } => {
-                write!(
-                    f,
-                    "Current: ({key}, {value}), Default: ({}, {})",
-                    default.0, default.1
-                )
-            }
-            ControlValueDescription::Point { value, default } => {
-                write!(
-                    f,
-                    "Current: ({}, {}), Default: ({}, {})",
-                    value.0, value.1, default.0, default.1
-                )
-            }
-            ControlValueDescription::Enum {
-                value,
-                possible,
-                default,
-            } => {
-                write!(
-                    f,
-                    "Current: {value}, Possible Values: {possible:?}, Default: {default}",
-                )
-            }
-            ControlValueDescription::RGB {
-                value,
-                max,
-                default,
-            } => {
-                write!(
-                    f,
-                    "Current: ({}, {}, {}), Max: ({}, {}, {}), Default: ({}, {}, {})",
-                    value.0, value.1, value.2, max.0, max.1, max.2, default.0, default.1, default.2
-                )
-            }
-            ControlValueDescription::StringList { value, availible } => {
-                write!(f, "Current: {value}, Availible: {availible:?}")
-            }
-        }
-    }
-}
-
 // fn step_chk(val: i64, default: i64, step: i64) -> Result<(), NokhwaError> {
 //     if (val - default) % step != 0 {
 //         return Err(NokhwaError::StructureError {
@@ -1162,247 +503,28 @@ impl Display for ControlValueDescription {
 //     Ok(())
 // }
 
-/// This struct tells you everything about a particular [`KnownCameraControl`].
-///
-/// However, you should never need to instantiate this struct, since its usually generated for you by `nokhwa`.
-/// The only time you should be modifying this struct is when you need to set a value and pass it back to the camera.
-/// NOTE: Assume the values for `min` and `max` as **non-inclusive**!.
-/// E.g. if the [`CameraControl`] says `min` is 100, the minimum is actually 101.
-#[derive(Clone, Debug, PartialOrd, PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-pub struct CameraControl {
-    control: KnownCameraControl,
-    name: String,
-    description: ControlValueDescription,
-    flag: Vec<KnownCameraControlFlag>,
-    active: bool,
-}
-
-impl CameraControl {
-    /// Creates a new [`CameraControl`]
-    #[must_use]
-    pub fn new(
-        control: KnownCameraControl,
-        name: String,
-        description: ControlValueDescription,
-        flag: Vec<KnownCameraControlFlag>,
-        active: bool,
-    ) -> Self {
-        CameraControl {
-            control,
-            name,
-            description,
-            flag,
-            active,
-        }
-    }
-
-    /// Gets the name of this [`CameraControl`]
-    #[must_use]
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    /// Gets the [`ControlValueDescription`] of this [`CameraControl`]
-    #[must_use]
-    pub fn description(&self) -> &ControlValueDescription {
-        &self.description
-    }
-
-    /// Gets the [`ControlValueSetter`] of the [`ControlValueDescription`] of this [`CameraControl`]
-    #[must_use]
-    pub fn value(&self) -> ControlValueSetter {
-        self.description.value()
-    }
-
-    /// Gets the [`KnownCameraControl`] of this [`CameraControl`]
-    #[must_use]
-    pub fn control(&self) -> KnownCameraControl {
-        self.control
-    }
-
-    /// Gets the [`KnownCameraControlFlag`] of this [`CameraControl`],
-    /// telling you weather this control is automatically set or manually set.
-    #[must_use]
-    pub fn flag(&self) -> &[KnownCameraControlFlag] {
-        &self.flag
-    }
-
-    /// Gets `active` of this [`CameraControl`],
-    /// telling you weather this control is currently active(in-use).
-    #[must_use]
-    pub fn active(&self) -> bool {
-        self.active
-    }
-
-    /// Gets `active` of this [`CameraControl`],
-    /// telling you weather this control is currently active(in-use).
-    pub fn set_active(&mut self, active: bool) {
-        self.active = active;
-    }
-}
-
-impl Display for CameraControl {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Control: {}, Name: {}, Value: {}, Flag: {:?}, Active: {}",
-            self.control, self.name, self.description, self.flag, self.active
-        )
-    }
-}
-
-/// The setter for a control value
-#[derive(Clone, Debug, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-pub enum ControlValueSetter {
-    None,
-    Integer(i64),
-    Float(f64),
-    Boolean(bool),
-    String(String),
-    Bytes(Vec<u8>),
-    KeyValue(i128, i128),
-    Point(f64, f64),
-    EnumValue(i64),
-    RGB(f64, f64, f64),
-    StringList(String),
-}
-
-impl ControlValueSetter {
-    #[must_use]
-    pub fn as_none(&self) -> Option<()> {
-        if let ControlValueSetter::None = self {
-            Some(())
-        } else {
-            None
-        }
-    }
-    #[must_use]
-
-    pub fn as_integer(&self) -> Option<&i64> {
-        if let ControlValueSetter::Integer(i) = self {
-            Some(i)
-        } else {
-            None
-        }
-    }
-    #[must_use]
-
-    pub fn as_float(&self) -> Option<&f64> {
-        if let ControlValueSetter::Float(f) = self {
-            Some(f)
-        } else {
-            None
-        }
-    }
-    #[must_use]
-
-    pub fn as_boolean(&self) -> Option<&bool> {
-        if let ControlValueSetter::Boolean(f) = self {
-            Some(f)
-        } else {
-            None
-        }
-    }
-    #[must_use]
-
-    pub fn as_str(&self) -> Option<&str> {
-        if let ControlValueSetter::String(s) = self {
-            Some(s)
-        } else {
-            None
-        }
-    }
-    #[must_use]
-
-    pub fn as_bytes(&self) -> Option<&[u8]> {
-        if let ControlValueSetter::Bytes(b) = self {
-            Some(b)
-        } else {
-            None
-        }
-    }
-    #[must_use]
-
-    pub fn as_key_value(&self) -> Option<(&i128, &i128)> {
-        if let ControlValueSetter::KeyValue(k, v) = self {
-            Some((k, v))
-        } else {
-            None
-        }
-    }
-    #[must_use]
-
-    pub fn as_point(&self) -> Option<(&f64, &f64)> {
-        if let ControlValueSetter::Point(x, y) = self {
-            Some((x, y))
-        } else {
-            None
-        }
-    }
-    #[must_use]
-
-    pub fn as_enum(&self) -> Option<&i64> {
-        if let ControlValueSetter::EnumValue(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-    #[must_use]
-
-    pub fn as_rgb(&self) -> Option<(&f64, &f64, &f64)> {
-        if let ControlValueSetter::RGB(r, g, b) = self {
-            Some((r, g, b))
-        } else {
-            None
-        }
-    }
-}
-
-impl Display for ControlValueSetter {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ControlValueSetter::None => {
-                write!(f, "Value: None")
-            }
-            ControlValueSetter::Integer(i) => {
-                write!(f, "IntegerValue: {i}")
-            }
-            ControlValueSetter::Float(d) => {
-                write!(f, "FloatValue: {d}")
-            }
-            ControlValueSetter::Boolean(b) => {
-                write!(f, "BoolValue: {b}")
-            }
-            ControlValueSetter::String(s) => {
-                write!(f, "StrValue: {s}")
-            }
-            ControlValueSetter::Bytes(b) => {
-                write!(f, "BytesValue: {b:x?}")
-            }
-            ControlValueSetter::KeyValue(k, v) => {
-                write!(f, "KVValue: ({k}, {v})")
-            }
-            ControlValueSetter::Point(x, y) => {
-                write!(f, "PointValue: ({x}, {y})")
-            }
-            ControlValueSetter::EnumValue(v) => {
-                write!(f, "EnumValue: {v}")
-            }
-            ControlValueSetter::RGB(r, g, b) => {
-                write!(f, "RGBValue: ({r}, {g}, {b})")
-            }
-            ControlValueSetter::StringList(s) => {
-                write!(f, "StringListValue: {s}")
-            }
-        }
-    }
+/// The list of known capture backends to the library. <br>
+/// - `Auto` - Use automatic selection.
+/// - `AVFoundation` - Uses `AVFoundation` on `MacOSX`
+/// - `Video4Linux` - `Video4Linux2`, a linux specific backend.
+/// - `UniversalVideoClass` -  ***DEPRECATED*** Universal Video Class (please check [libuvc](https://github.com/libuvc/libuvc)). Platform agnostic, although on linux it needs `sudo` permissions or similar to use.
+/// - `MediaFoundation` - Microsoft Media Foundation, Windows only,
+/// - `OpenCv` - Uses `OpenCV` to capture. Platform agnostic.
+/// - `GStreamer` - ***DEPRECATED*** Uses `GStreamer` RTP to capture. Platform agnostic.
+/// - `Browser` - Uses browser APIs to capture from a webcam.
+pub enum SelectableBackend {
+    Auto,
+    Custom(&'static str),
+    AVFoundation,
+    Video4Linux,
+    UniversalVideoClass,
+    MediaFoundation,
+    OpenCv,
+    GStreamer,
+    Browser,
 }
 
 /// The list of known capture backends to the library. <br>
-/// - `AUTO` is special - it tells the Camera struct to automatically choose a backend most suited for the current platform.
 /// - `AVFoundation` - Uses `AVFoundation` on `MacOSX`
 /// - `Video4Linux` - `Video4Linux2`, a linux specific backend.
 /// - `UniversalVideoClass` -  ***DEPRECATED*** Universal Video Class (please check [libuvc](https://github.com/libuvc/libuvc)). Platform agnostic, although on linux it needs `sudo` permissions or similar to use.
@@ -1413,7 +535,6 @@ impl Display for ControlValueSetter {
 #[derive(Copy, Clone, Debug, Hash, Ord, PartialOrd, Eq, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum ApiBackend {
-    Auto,
     Custom(&'static str),
     AVFoundation,
     Video4Linux,
@@ -1495,7 +616,7 @@ impl Display for ApiBackend {
 //     }
 // }
 
-#[cfg(all(feature = "mjpeg", not(target_arch = "wasm")))]
+#[cfg(all(feature = "conversions", not(target_arch = "wasm32")))]
 #[cfg_attr(feature = "docs-features", doc(cfg(feature = "mjpeg")))]
 #[inline]
 fn decompress<'a>(
@@ -1538,6 +659,7 @@ fn decompress<'a>(
 /// # Safety
 /// This function uses `unsafe`. The caller must ensure that:
 /// - The input data is of the right size, does not exceed bounds, and/or the final size matches with the initial size.
+#[cfg(all(feature = "conversions", not(target_arch = "wasm32")))]
 #[cfg_attr(feature = "docs-features", doc(cfg(feature = "mjpeg")))]
 #[cfg(all(
     feature = "mjpeg",
@@ -1567,11 +689,11 @@ pub fn mjpeg_to_rgb(data: &[u8], rgba: bool) -> Result<Vec<u8>, NokhwaError> {
     }
 }
 
-#[cfg(not(all(
-    feature = "mjpeg",
-    not(target_arch = "wasm32"),
-    not(target_arch = "wasm64")
-)))]
+
+/// Equivalent to [`mjpeg_to_rgb`] except with a destination buffer.
+/// # Errors
+/// If the decoding fails (e.g. invalid MJpeg stream), the buffer is not large enough, or you are doing this on `WebAssembly`, this will error.
+#[cfg(not(all(feature = "conversions", not(target_arch = "wasm32"))))]
 pub fn mjpeg_to_rgb(_data: &[u8], _rgba: bool) -> Result<Vec<u8>, NokhwaError> {
     Err(NokhwaError::NotImplementedError(
         "Not available on WASM".to_string(),
@@ -1580,16 +702,12 @@ pub fn mjpeg_to_rgb(_data: &[u8], _rgba: bool) -> Result<Vec<u8>, NokhwaError> {
 
 /// Equivalent to [`mjpeg_to_rgb`] except with a destination buffer.
 /// # Errors
-/// If the decoding fails (e.g. invalid MJPEG stream), the buffer is not large enough, or you are doing this on `WebAssembly`, this will error.
-#[cfg(all(
-    feature = "mjpeg",
-    not(target_arch = "wasm32"),
-    not(target_arch = "wasm64")
-))]
+/// If the decoding fails (e.g. invalid MJpeg stream), the buffer is not large enough, or you are doing this on `WebAssembly`, this will error.
+#[cfg(not(all(feature = "conversions", not(target_arch = "wasm32"))))]
 #[cfg_attr(feature = "docs-features", doc(cfg(feature = "mjpeg")))]
 #[inline]
 pub fn buf_mjpeg_to_rgb(data: &[u8], dest: &mut [u8], rgba: bool) -> Result<(), NokhwaError> {
-    let mut jpeg_decompress = decompress(data, rgba)?;
+    let mut jpeg_decompress = mozjpeg::decompress(data, rgba)?;
 
     // assert_eq!(dest.len(), jpeg_decompress.min_flat_buffer_size());
     if dest.len() != jpeg_decompress.min_flat_buffer_size() {
@@ -1619,11 +737,11 @@ pub fn buf_mjpeg_to_rgb(data: &[u8], dest: &mut [u8], rgba: bool) -> Result<(), 
     Ok(())
 }
 
-#[cfg(not(all(
-    feature = "mjpeg",
-    not(target_arch = "wasm32"),
-    not(target_arch = "wasm64")
-)))]
+// TODO: deprecate?
+/// Equivalent to [`mjpeg_to_rgb`] except with a destination buffer.
+/// # Errors
+/// If the decoding fails (e.g. invalid MJpeg stream), the buffer is not large enough, or you are doing this on `WebAssembly`, this will error.
+#[cfg(all(feature = "conversions", not(target_arch = "wasm32")))]
 pub fn buf_mjpeg_to_rgb(_data: &[u8], _dest: &mut [u8], _rgba: bool) -> Result<(), NokhwaError> {
     Err(NokhwaError::NotImplementedError(
         "Not available on WASM".to_string(),
@@ -1654,17 +772,17 @@ pub fn buf_yuyv422_to_rgb(data: &[u8], dest: &mut [u8], rgba: bool) -> Result<()
     let mut buf: Vec<u8> = Vec::new();
     if data.len() % 4 != 0 {
         return Err(NokhwaError::ProcessFrameError {
-            src: FrameFormat::Yuv422.into(),
+            src: FrameFormat::Yuy2_422,
             destination: "RGB888".to_string(),
             error: "Assertion failure, the YUV stream isn't 4:2:2! (wrong number of bytes)"
                 .to_string(),
         });
     }
     for chunk in data.chunks_exact(4) {
-        let y0 = chunk[0] as f32;
-        let u = chunk[1] as f32;
-        let y1 = chunk[2] as f32;
-        let v = chunk[3] as f32;
+        let y0 = f32::from(chunk[0]);
+        let u = f32::from(chunk[1]);
+        let y1 = f32::from(chunk[2]);
+        let v = f32::from(chunk[3]);
 
         let r0 = y0 + 1.370_705 * (v - 128.);
         let g0 = y0 - 0.698_001 * (v - 128.) - 0.337_633 * (u - 128.);

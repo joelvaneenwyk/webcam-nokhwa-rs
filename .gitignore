@@ -10,7 +10,12 @@ nokhwa.iml
 target/
 
 .DS_STORE
+# Devenv
+.devenv*
+devenv.local.nix
 
-.pnp.cjs
+# direnv
+.direnv
 
-.yarn/
+# pre-commit
+.pre-commit-config.yaml

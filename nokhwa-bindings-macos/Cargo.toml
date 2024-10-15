@@ -22,5 +22,7 @@ cocoa-foundation = "0.1"
 core-foundation = "0.9.3"
 objc = { version = "0.2", features = ["exception"] }
 block = "0.1"
-flume = "0.10"
+flume = "0.11.0"
 once_cell = "1.16"
+
+av-foundation = "0.3.0"

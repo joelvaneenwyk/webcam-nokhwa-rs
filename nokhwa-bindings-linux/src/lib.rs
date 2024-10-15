@@ -22,8 +22,8 @@ mod internal {
         error::NokhwaError,
         traits::CaptureTrait,
         types::{
-            ApiBackend, CameraControl, CameraFormat, CameraIndex, CameraInfo,
-            ControlValueDescription, ControlValueSetter, FrameFormat, KnownCameraControl,
+            ApiBackend, CameraFormat, CameraIndex, CameraInfo,
+            FrameFormat,
             KnownCameraControlFlag, RequestedFormat, RequestedFormatType, Resolution,
         },
     };
@@ -34,9 +34,9 @@ mod internal {
     };
     use v4l::{
         control::{Control, Flags, Type, Value},
-        frameinterval::FrameIntervalEnum,
-        framesize::FrameSizeEnum,
-        io::traits::{CaptureStream, Stream},
+        frameinterval::FrameIntervalEnum
+        ,
+        io::traits::CaptureStream,
         prelude::MmapStream,
         video::{capture::Parameters, Capture},
         Device, Format, FourCC,
@@ -47,6 +47,7 @@ mod internal {
         V4L2_CID_IRIS_RELATIVE, V4L2_CID_PAN_RELATIVE, V4L2_CID_SATURATION, V4L2_CID_SHARPNESS,
         V4L2_CID_TILT_RELATIVE, V4L2_CID_WHITE_BALANCE_TEMPERATURE, V4L2_CID_ZOOM_RELATIVE,
     };
+    use nokhwa_core::controls::{CameraControl, ControlValueDescription, ControlValueSetter, KnownCameraControl};
 
     /// Attempts to convert a [`KnownCameraControl`] into a V4L2 Control ID.
     /// If the associated control is not found, this will return `None` (`ColorEnable`, `Roll`)
@@ -493,18 +494,60 @@ mod internal {
         /// # Errors
         /// If the internal representation in the driver is invalid, this will error.
         pub fn force_refresh_camera_format(&mut self) -> Result<(), NokhwaError> {
-            let camera_format = get_device_format(&*self.lock_device()?)?;
-            self.camera_format = camera_format;
-            Ok(())
+            match self.device.format() {
+                Ok(format) => {
+                    let frame_format = fourcc_to_frameformat(format.fourcc).ok_or(
+                        NokhwaError::GetPropertyError {
+                            property: "FrameFormat".to_string(),
+                            error: "unsupported".to_string(),
+                        },
+                    )?;
+
+                    let fps = match self.device.params() {
+                        Ok(params) => {
+                            if params.interval.numerator != 1
+                                || params.interval.denominator % params.interval.numerator != 0
+                            {
+                                return Err(NokhwaError::GetPropertyError {
+                                    property: "V4L2 FrameRate".to_string(),
+                                    error: format!(
+                                        "Framerate not whole number: {} / {}",
+                                        params.interval.denominator, params.interval.numerator
+                                    ),
+                                });
+                            }
+
+                            if params.interval.numerator == 1 {
+                                params.interval.denominator
+                            } else {
+                                params.interval.denominator / params.interval.numerator
+                            }
+                        }
+                        Err(why) => {
+                            return Err(NokhwaError::GetPropertyError {
+                                property: "V4L2 FrameRate".to_string(),
+                                error: why.to_string(),
+                            })
+                        }
+                    };
+
+                    self.camera_format = Some(CameraFormat::new(
+                        Resolution::new(format.width, format.height),
+                        frame_format: ,
+                        fps,
+                    ));
+                    Ok(())
+                }
+                Err(why) => Err(NokhwaError::GetPropertyError {
+                    property: "parameters".to_string(),
+                    error: why.to_string(),
+                }),
+            }
         }
     }
 
     impl<'a> CaptureTrait for V4LCaptureDevice<'a> {
         fn init(&mut self) -> Result<(), NokhwaError> {
-            todo!()
-        }
-
-        fn init_with_format(&mut self, format: FormatFilter) -> Result<CameraFormat, NokhwaError> {
             todo!()
         }
 
@@ -918,8 +961,8 @@ mod internal {
 
     fn fourcc_to_frameformat(fourcc: FourCC) -> Option<FrameFormat> {
         match fourcc.str().ok()? {
-            "YUYV" => Some(FrameFormat::Yuv422),
-            "UYVY" => Some(FrameFormat::Uyv422),
+            "YUYV" => Some(FrameFormat::Yuy2_422),
+            "UYVY" => Some(FrameFormat::Uyvy422),
             "YV12" => Some(FrameFormat::Yv12),
             "MJPG" => Some(FrameFormat::MJpeg),
             "GRAY" => Some(FrameFormat::Luma8),
@@ -952,12 +995,13 @@ mod internal {
     use nokhwa_core::error::NokhwaError;
     use nokhwa_core::traits::CaptureTrait;
     use nokhwa_core::types::{
-        ApiBackend, CameraControl, CameraFormat, CameraIndex, CameraInfo, ControlValueSetter,
-        FrameFormat, KnownCameraControl, RequestedFormat, Resolution,
+        ApiBackend, CameraFormat, CameraIndex, CameraInfo,
+        FrameFormat, RequestedFormat, Resolution,
     };
     use std::borrow::Cow;
     use std::collections::HashMap;
     use std::marker::PhantomData;
+    use nokhwa_core::controls::{CameraControl, ControlValueSetter, KnownCameraControl};
 
     /// Attempts to convert a [`KnownCameraControl`] into a V4L2 Control ID.
     /// If the associated control is not found, this will return `None` (`ColorEnable`, `Roll`)

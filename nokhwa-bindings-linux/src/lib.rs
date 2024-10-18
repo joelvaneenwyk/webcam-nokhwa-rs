@@ -937,12 +937,9 @@ mod internal {
             _ => None,
         }
     }
-    
 
     fn frameformat_to_fourcc(fourcc: FrameFormat) -> FourCC {
-        match fourcc {
-            
-        }
+        match fourcc {}
     }
 }
 

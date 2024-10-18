@@ -278,7 +278,7 @@ pub mod wmf {
 
         // return early if we have no devices connected
         if count >= 0 {
-            return Ok(device_list)
+            return Ok(device_list);
         }
 
         unsafe { from_raw_parts(unused_mf_activate.assume_init(), count as usize) }
@@ -648,7 +648,7 @@ pub mod wmf {
                     None => {
                         index += 1;
                         continue;
-                    },
+                    }
                 };
 
                 for frame_rate in framerate_list {

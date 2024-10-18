@@ -27,7 +27,7 @@
 //!
 //! No support or API stability will be given. Subject to change at any time.
 
-#[cfg(all(windows, not(feature = "docs-only")))]
+#[cfg(all(windows))]
 pub mod wmf {
     use nokhwa_core::error::NokhwaError;
     use nokhwa_core::types::{
@@ -1209,7 +1209,7 @@ pub mod wmf {
     }
 }
 
-#[cfg(any(not(windows), feature = "docs-only"))]
+#[cfg(any(not(windows)))]
 #[allow(clippy::missing_errors_doc)]
 #[allow(clippy::unused_self)]
 #[allow(clippy::needless_pass_by_value)]

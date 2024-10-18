@@ -84,7 +84,7 @@ impl Camera {
     /// Allows creation of a [`Camera`] with a custom backend. This is useful if you are creating e.g. a custom module.
     ///
     /// You **must** have set a format beforehand.
-    pub fn with_custom(
+    #[must_use] pub fn with_custom(
         idx: CameraIndex,
         api: ApiBackend,
         device: Box<dyn CaptureBackendTrait>,
@@ -284,9 +284,7 @@ impl Camera {
         let known_controls = self.supported_camera_controls()?;
         let maybe_camera_controls = known_controls
             .iter()
-            .map(|x| self.camera_control(*x))
-            .filter(Result::is_ok)
-            .map(Result::unwrap)
+            .flat_map(|x| self.camera_control(*x))
             .collect::<Vec<CameraControl>>();
 
         Ok(maybe_camera_controls)

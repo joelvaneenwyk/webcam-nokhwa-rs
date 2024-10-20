@@ -1,0 +1,11 @@
+version: "0.2"
+ignorePaths: []
+dictionaryDefinitions:
+  - name: webcam-nokhwa
+    path: ./.github/config/webcam-nokhwa.dict
+    addWords: true
+dictionaries:
+  - webcam-nokhwa
+words: []
+ignoreWords: []
+import: []

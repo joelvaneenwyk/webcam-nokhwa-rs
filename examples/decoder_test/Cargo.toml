@@ -5,8 +5,9 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
-image = "0.24.5"
+[dependencies.image]
+version = "0.25.4"
+features = ["png"]
 
 [dependencies.nokhwa-core]
 path = "../../nokhwa-core"

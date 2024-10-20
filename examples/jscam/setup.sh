@@ -21,11 +21,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #
-
-mkdir public
-mkdir dist
+set -eax
+mkdir -p public
+mkdir -p dist
 cd ../../
-sh make-npm.sh
+# shellcheck disable=SC1091
+. ./make-npm.sh
 cd examples/jscam || return
 npm install --save-dev webpack webpack-cli webpack-dev-server
 npm install --save ../../nokhwajs

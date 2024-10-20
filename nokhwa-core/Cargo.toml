@@ -16,7 +16,8 @@ wgpu-types = ["wgpu"]
 mjpeg = ["mozjpeg"]
 opencv-mat = ["opencv"]
 docs-features = ["serialize", "wgpu-types", "mjpeg"]
-test-fail-warnings = []
+output-wasm = []
+test-fail-warning = []
 
 
 [dependencies]
